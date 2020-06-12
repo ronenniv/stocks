@@ -24,13 +24,11 @@ class Stock(Resource):
         POST request - json required
         {desc: description}
         """
-        if not StockModel.find_by_symbol(symbol):
-            stock = StockModel(symbol, StockModel.parse_request_json()[StockModel.JSON_DESC_STR])
-            current_app.logger.debug(stock.json())
-            stock.save_stock_details()
-            return stock.json()
+        stock = StockModel(symbol, StockModel.parse_request_json()[StockModel.JSON_DESC_STR])
+        if stock.save_stock_details():
+            return stock.json(), HTTPStatus.CREATED
         else:
-            return {'message': 'Stock {} already exist'.format(symbol)}, HTTPStatus.BAD_REQUEST
+            return {'message': 'Stock {} not found'.format(symbol)}, HTTPStatus.NOT_FOUND
 
     def put(self, symbol):
         """
@@ -57,4 +55,4 @@ class Stock(Resource):
 class StockList(Resource):
 
     def get(self):
-        return [stock.json() for stock in StockModel.query.all()]
+        return {'stocks': [stock.json() for stock in StockModel.query.all()]}
