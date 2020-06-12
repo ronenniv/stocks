@@ -1,0 +1,6 @@
+__pycache__/
+.idea/
+data.db
+*.pyc
+venv/Lib
+venv/Include

@@ -1,0 +1,131 @@
+from db import db
+
+from flask import current_app # for debugging
+
+from flask_restful import reqparse
+
+# maximum length for string fields
+SYMBOL_MAX_LEN = 8
+DESC_MAX_LEN = 30
+PRICE_PRECISION = 2
+
+
+class StockModel(db.Model):  # extend db.Model for SQLAlechemy
+
+
+    JSON_SYMBOL_STR = 'symbol'
+    JSON_DESC_STR = 'desc'
+
+    __tablename__ = 'stock'
+
+    id = db.Column(db.Integer, primary_key=True)
+    symbol = db.Column(db.String(SYMBOL_MAX_LEN), unique=True)
+    desc = db.Column(db.String(DESC_MAX_LEN))
+    quantity = db.Column(db.Integer())
+    unit_cost = db.Column(db.Float(precision=PRICE_PRECISION))
+    price = db.Column(db.Float(precision=PRICE_PRECISION))
+
+    #positions = db.relationship('StockModel', lazy='dynamic')  # this definition comes together with the define in
+
+    # PositionsModel. Lazy will ask to not create entries for positions
+
+    def __init__(self, symbol, desc, **kwargs):
+        super().__init__(**kwargs)
+        self.symbol = symbol
+        self.desc = desc
+        self.quantity = 0
+        self.unit_cost = 0
+        self.price = 0
+
+    @classmethod
+    def parse_request_json_with_symbol(cls):
+        """
+        parse symbol and description from request
+        """
+        parser = reqparse.RequestParser()
+        parser.add_argument(
+            name=StockModel.JSON_SYMBOL_STR,
+            type=str,
+            required=True,
+            trim=True,
+            help='Stock symbol is missing')
+        parser.add_argument(
+            name=StockModel.JSON_DESC_STR,
+            type=str,
+            required=True,
+            trim=True,
+            help='Stock description is missing')
+        current_app.logger.debug('in parse')
+        current_app.logger.debug(dict(parser.parse_args()))
+        return parser.parse_args(strict=False)  # only the two argument can be in the request
+
+    @classmethod
+    def parse_request_json(cls):
+        """
+        parse desc from request
+        """
+        parser = reqparse.RequestParser()
+        parser.add_argument(
+            name=StockModel.JSON_DESC_STR,
+            type=str,
+            required=True,
+            trim=True,
+            help='Stock description is missing')
+        current_app.logger.debug('in parse')
+        current_app.logger.debug(dict(parser.parse_args()))
+        return parser.parse_args(strict=False)  # only the one argument can be in the request
+
+    @classmethod
+    def find_by_symbol(cls, symbol):
+        """
+        find record in DB according to symbol
+        if found, return object with stock details, otherwise None
+        """
+        return cls.query.filter_by(symbol=symbol).first()  # SQLAlchemy -> SELECT * FROM stock WHERE symbol=symbol
+
+    def json(self) -> dict:
+        """
+        create JSON for the stock details
+        """
+        return {
+            'symbol': self.symbol,
+            'desc': self.desc,
+            'quantity': self.quantity,
+            'unit_cost': self.unit_cost,
+            'price': self.price
+        }
+
+    def detailed_json(self) -> dict:
+        """
+        create JSON for the stock details and stock's positions
+        """
+        return {
+            'symbol': self.symbol,
+            'desc': self.desc,
+            'quantity': self.quantity,
+            'unit_cost': self.unit_cost,
+            'price': self.price,
+            'positions':
+                [position.json() for position in self.positions.all()]
+        }
+
+    def save_stock_details(self):
+        """
+        update or insert symbol and desc for stock
+        """
+        stock = StockModel.find_by_symbol(self.symbol)
+        if stock:
+            stock.symbol = self.symbol
+            stock.desc = self.desc
+        else:
+            stock = StockModel(self.symbol, self.desc)  # copy only symbol and desc
+        current_app.logger.debug('stock found with {} {}'.format(stock.symbol, stock.desc))
+        db.session.add(stock)
+        db.session.commit()
+
+    def del_stock(self):
+        """
+        delete stock from DB
+        """
+        db.session.delete(self)
+        db.session.commit()
