@@ -1,4 +1,6 @@
-Flask
+Flask~=1.1.2
 Flask-RESTful
 Flask-JWT
 Flask-SQLAlchemy
+
+SQLAlchemy~=1.3.17

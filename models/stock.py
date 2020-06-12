@@ -146,7 +146,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
             db.session.rollback()
             return False
 
-    def del_stock(self, symbol):
+    def del_stock(self):
         """
         delete stock from DB
         """
