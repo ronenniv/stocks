@@ -28,7 +28,7 @@ class Stock(Resource):
         if stock.save_stock_details():
             return stock.json(), HTTPStatus.CREATED
         else:
-            return {'message': 'Stock {} not found'.format(symbol)}, HTTPStatus.NOT_FOUND
+            return {'message': 'Stock {} already exist'.format(symbol)}, HTTPStatus.BAD_REQUEST
 
     def put(self, symbol):
         """

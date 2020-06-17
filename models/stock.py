@@ -23,7 +23,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
     unit_cost = db.Column(db.Float(precision=const.PRICE_PRECISION))
     price = db.Column(db.Float(precision=const.PRICE_PRECISION))
 
-    #positions = db.relationship('PositionsModel', lazy='dynamic')  # this definition comes together with the define in
+    # positions = db.relationship('PositionsModel', lazy='dynamic')  # this definition comes together with the define in
     # PositionsModel. Lazy will ask to not create entries for positions
 
     def __init__(self, symbol, desc, **kwargs):
@@ -35,18 +35,24 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         self.price = 0
 
     @staticmethod
-    def validate_symbol(symbol) -> bool:
+    def parse_validations(symbol=None, desc=None) -> dict:
         """
-        return True if symbol is valid
+        return True if both fields are valid
+        can transfer only one value to validate
         """
-        return (len(symbol) <= const.SYMBOL_MAX_LEN) and symbol.isalpha() and symbol.isupper()
-
-    @staticmethod
-    def validate_desc(desc) -> bool:
-        """
-        return true if desc is valid
-        """
-        return len(desc) <= const.DESC_MAX_LEN and desc.isprintable()
+        validation_flag = {}
+        if symbol:
+            if len(symbol) <= const.SYMBOL_MAX_LEN and symbol.isalpha() and symbol.isupper():
+                validation_flag['symbol'] = True
+            else:
+                validation_flag['symbol'] = False
+        if desc:
+            if len(desc) <= const.DESC_MAX_LEN and desc.isprintable():
+                validation_flag['desc'] = True
+            else:
+                validation_flag['desc'] = False
+        current_app.logger.debug('validation flag={}'.format(validation_flag))
+        return validation_flag
 
     @classmethod
     def parse_request_json_with_symbol(cls):
@@ -71,9 +77,10 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         current_app.logger.debug(dict(parser.parse_args()))
 
         # validation on parse data
-        if not cls.validate_symbol(result[StockModel.JSON_SYMBOL_STR]):
+        validation_result = cls.parse_validations(**result)
+        if not validation_result['symbol']:
             abort(400, message='Symbol incorrect')
-        if not cls.validate_desc(result[StockModel.JSON_DESC_STR]):
+        elif not validation_result['desc']:
             abort(400, message='Description incorrect')
 
         return result
@@ -94,8 +101,8 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         current_app.logger.debug(dict(parser.parse_args()))
         result = parser.parse_args(strict=False)  # only the one argument can be in the request
         # validation on parse data
-        if not cls.validate_symbol(result[StockModel.JSON_SYMBOL_STR]):
-            abort(400, message='Symbol incorrect')
+        if not cls.parse_validations(desc=result[StockModel.JSON_DESC_STR])['desc']:
+            abort(400, message='Description incorrect')
 
         return result
 
