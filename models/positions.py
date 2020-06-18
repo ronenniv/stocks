@@ -20,16 +20,15 @@ class PositionsModel(db.Model):  # extend db.Model for SQLAlechemy
     __tablename__ = 'positions'
 
     id = db.Column(db.Integer, primary_key=True)
-    #symbol = db.Column(db.String(const.SYMBOL_MAX_LEN))
     quantity = db.Column(db.Integer)
     position_date = db.Column(db.Date)
     unit_cost = db.Column(db.Float)
     #unit_cost = db.Column(db.Float(precision=const.PRICE_PRECISION))
     stock_id = db.Column(db.Integer, db.ForeignKey('stock.id'), nullable=False)  # foreign key to stock table
 
-    def __init__(self, quantity, position_date, unit_cost, stock_id=None, **kwargs):
+    def __init__(self, symbol, quantity, position_date, unit_cost, stock_id=None, **kwargs):
         super().__init__(**kwargs)
-        #self.symbol = symbol
+        self.symbol = symbol
         self.quantity = quantity
         self.position_date = position_date
         self.unit_cost = unit_cost
@@ -66,7 +65,7 @@ class PositionsModel(db.Model):  # extend db.Model for SQLAlechemy
             trim=True,
             help='unit cost is missing or invalid')
         current_app.logger.debug(dict(parser.parse_args()))
-        return parser.parse_args(strict=False)  # only the one argument can be in the request
+        return parser.parse_args(strict=True)  # only the one argument can be in the request
 
     @classmethod
     def find_by_symbol(cls, symbol):
@@ -93,12 +92,12 @@ class PositionsModel(db.Model):  # extend db.Model for SQLAlechemy
 
         }
 
-    def save_position_details(self, symbol):
+    def save_position_details(self):
         """
         insert position details for a stock
         """
-        current_app.logger.debug('func: save_position_details, symbol={}, self={}'.format(symbol, self))
-        self.stock_id = StockModel.find_by_symbol(symbol).id
+        current_app.logger.debug('func: save_position_details, self={}'.format(self))
+        self.stock_id = StockModel.find_by_symbol(self.symbol).id
         current_app.logger.debug(self.json())
         db.session.add(self)
         current_app.logger.debug('func: save_position_details, after session_add')
