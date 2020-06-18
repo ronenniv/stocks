@@ -124,12 +124,12 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         create JSON for the stock details
         """
         return {
+            'id': self.id,
             'symbol': self.symbol,
             'desc': self.desc,
             'quantity': self.quantity,
             'unit_cost': self.unit_cost,
-            'price': self.price,
-            'id': self.id
+            'price': self.price
         }
 
     def detailed_json(self) -> dict:
@@ -137,6 +137,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         create JSON for the stock details and stock's positions
         """
         return {
+            'id': self.id,
             'symbol': self.symbol,
             'desc': self.desc,
             'quantity': self.quantity,

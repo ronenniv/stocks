@@ -85,6 +85,7 @@ class PositionsModel(db.Model):  # extend db.Model for SQLAlechemy
         create JSON for the stock details
         """
         return {
+            'position_id': self.id,
             'date': self.position_date.strftime('%Y-%m-%d'),
             'quantity': self.quantity,
             'unit_cost': self.unit_cost,
