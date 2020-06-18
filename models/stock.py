@@ -13,6 +13,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
 
     JSON_SYMBOL_STR = 'symbol'
     JSON_DESC_STR = 'desc'
+    JSON_UNIT_COST_STR = 'unit_cost'
 
     __tablename__ = 'stock'
 
@@ -23,7 +24,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
     unit_cost = db.Column(db.Float(precision=const.PRICE_PRECISION))
     price = db.Column(db.Float(precision=const.PRICE_PRECISION))
 
-    # positions = db.relationship('PositionsModel', lazy='dynamic')  # this definition comes together with the define in
+    positions = db.relationship('PositionsModel', lazy='dynamic')  # this definition comes together with the define in
     # PositionsModel. Lazy will ask to not create entries for positions
 
     def __init__(self, symbol, desc, **kwargs):
@@ -53,37 +54,6 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
                 validation_flag['desc'] = False
         current_app.logger.debug('validation flag={}'.format(validation_flag))
         return validation_flag
-
-    @classmethod
-    def parse_request_json_with_symbol(cls):
-        """
-        parse symbol and description from request
-        """
-        parser = reqparse.RequestParser()
-        parser.add_argument(
-            name=StockModel.JSON_SYMBOL_STR,
-            type=str,
-            required=True,
-            trim=True,
-            help='Stock symbol is missing')
-        parser.add_argument(
-            name=StockModel.JSON_DESC_STR,
-            type=str,
-            required=True,
-            trim=True,
-            help='Stock description is missing')
-        result = parser.parse_args(strict=False)  # only the two argument can be in the request
-        current_app.logger.debug('in parse')
-        current_app.logger.debug(dict(parser.parse_args()))
-
-        # validation on parse data
-        validation_result = cls.parse_validations(**result)
-        if not validation_result['symbol']:
-            abort(400, message='Symbol incorrect')
-        elif not validation_result['desc']:
-            abort(400, message='Description incorrect')
-
-        return result
 
     @classmethod
     def parse_request_json(cls):
@@ -123,7 +93,8 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
             'desc': self.desc,
             'quantity': self.quantity,
             'unit_cost': self.unit_cost,
-            'price': self.price
+            'price': self.price,
+            'id': self.id
         }
 
     def detailed_json(self) -> dict:

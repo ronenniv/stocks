@@ -20,18 +20,22 @@ class Position(Resource):
             return result
         else:
             return {'message': 'Positions for symbol {} not found'.format(symbol)}, HTTPStatus.NOT_FOUND
-'''
+
     def post(self, symbol):
         """
         POST request - json required
         {desc: description}
         """
-        stock = StockModel(symbol, StockModel.parse_request_json()[StockModel.JSON_DESC_STR])
-        if stock.save_stock_details():
-            return stock.json(), HTTPStatus.CREATED
-        else:
-            return {'message': 'Stock {} already exist'.format(symbol)}, HTTPStatus.BAD_REQUEST
+        current_app.logger.debug('in get position')
+        position_args = PositionsModel.parse_request_json()
+        position = PositionsModel(symbol,
+                                  position_args[PositionsModel.JSON_QUANTITY_STR],
+                                  position_args[PositionsModel.JSON_DATE_STR],
+                                  position_args[PositionsModel.JSON_UNIT_COST_STR])
+        position.save_position_details()
+        return position.json(), HTTPStatus.CREATED
 
+'''
     def put(self, symbol):
         """
         PUT request - json required

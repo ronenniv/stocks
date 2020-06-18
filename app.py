@@ -8,6 +8,7 @@ from flask_jwt import JWT
 from flask_restful import Api
 
 from resources.stock import Stock, StockList
+from resources.positions import Position
 
 app = Flask(__name__)
 # turning off the flask sqlalchmey sync tracker
@@ -35,9 +36,9 @@ except KeyError:
                         datefmt='%m/%d/%Y %I:%M:%S',
                         level=logging.WARNING)
 
-
-api.add_resource(Stock, '/stock/<string:symbol>')  # http://hostanme/stock/<symbol name>
-api.add_resource(StockList, '/stocks')  # http://hostanme/stocks
+api.add_resource(Stock, '/stock/<string>:symbol')  # http://hostanme/stock/<symbol name>
+#api.add_resource(Position, '/position/<string:symbol>')  # http://hostanme/stock/<symbol name>
+#api.add_resource(StockList, '/stocks')  # http://hostanme/stocks
 
 
 def main():
