@@ -24,8 +24,9 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
     unit_cost = db.Column(db.Float(precision=const.PRICE_PRECISION))
     price = db.Column(db.Float(precision=const.PRICE_PRECISION))
 
-    positions = db.relationship('PositionsModel', lazy='dynamic')  # this definition comes together with the define in
+    # this definition comes together with the define in
     # PositionsModel. Lazy will ask to not create entries for positions
+    positions = db.relationship('PositionsModel', lazy='dynamic')
 
     def __init__(self, symbol, desc, **kwargs):
         super().__init__(**kwargs)
@@ -34,6 +35,9 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         self.quantity = 0
         self.unit_cost = 0
         self.price = 0
+
+    def __repr__(self):
+        return str(self.json())
 
     @staticmethod
     def parse_validations(symbol=None, desc=None) -> dict:
@@ -54,6 +58,37 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
                 validation_flag['desc'] = False
         current_app.logger.debug('validation flag={}'.format(validation_flag))
         return validation_flag
+
+    @classmethod
+    def parse_request_json_with_symbol(cls):
+        """
+        parse symbol and description from request
+        """
+        parser = reqparse.RequestParser()
+        parser.add_argument(
+            name=StockModel.JSON_SYMBOL_STR,
+            type=str,
+            required=True,
+            trim=True,
+            help='Stock symbol is missing')
+        parser.add_argument(
+            name=StockModel.JSON_DESC_STR,
+            type=str,
+            required=True,
+            trim=True,
+            help='Stock description is missing')
+        result = parser.parse_args(strict=False)  # only the two argument can be in the request
+        current_app.logger.debug('in parse')
+        current_app.logger.debug(dict(parser.parse_args()))
+
+        # validation on parse data
+        validation_result = cls.parse_validations(**result)
+        if not validation_result['symbol']:
+            abort(400, message='Symbol incorrect')
+        elif not validation_result['desc']:
+            abort(400, message='Description incorrect')
+
+        return result
 
     @classmethod
     def parse_request_json(cls):
@@ -82,7 +117,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         find record in DB according to symbol
         if found, return object with stock details, otherwise None
         """
-        return cls.query.filter_by(symbol=symbol).first()  # SQLAlchemy -> SELECT * FROM stock WHERE symbol=symbol
+        return cls.query.filter_by(symbol=symbol).one()  # SELECT * FROM stock WHERE symbol=symbol. one raise exception if more than one row
 
     def json(self) -> dict:
         """
@@ -114,19 +149,27 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
     def save_stock_details(self) -> bool:
         """
         update or insert symbol and desc for stock
-        :rtype: True for success, False for failure
+        :return: True for success, False for failure
         """
         try:
             db.session.add(self)
             db.session.commit()
             return True
         except IntegrityError:  # unique constraint violation
+            current_app.logger.debug('func: save_stock_details, exception: IntegrityError, self: {}'.format(self))
             db.session.rollback()
             return False
 
-    def del_stock(self):
+    def del_stock(self) -> bool:
         """
         delete stock from DB
+        :return: True for success, False for failure
         """
-        db.session.delete(self)
-        db.session.commit()
+        try:
+            db.session.delete(self)
+            db.session.commit()
+            return True
+        except IntegrityError:  # unique constraint violation
+            current_app.logger.debug('func: del_stock, exception: IntegrityError, self: {}'.format(self))
+            db.session.rollback()
+            return False

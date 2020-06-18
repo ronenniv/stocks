@@ -35,8 +35,7 @@ class Stock(Resource):
         """
         stock_req = StockModel.parse_request_json_with_symbol()
         stock = StockModel(**stock_req)
-        stock.save_stock_details()
-        return stock.json()
+        return stock.json() if stock.save_stock_details() else ({'message': 'error when saving stock {}'.format(symbol)}, HTTPStatus.BAD_REQUEST)
 
     def delete(self, symbol):
         """
@@ -44,8 +43,7 @@ class Stock(Resource):
         """
         stock = StockModel.find_by_symbol(symbol)
         if stock:
-            stock.del_stock()
-            return stock.json()
+            return stock.json() if stock.del_stock() else ({'message': 'error when delete'}, HTTPStatus.CONFLICT)
         else:
             return {'message': 'Stock {} not found'.format(symbol)}, HTTPStatus.NOT_FOUND
 
@@ -53,4 +51,4 @@ class Stock(Resource):
 class StockList(Resource):
 
     def get(self):
-        return {'stocks': [stock.json() for stock in StockModel.query.all()]}
+        return {'stocks': [stock.detailed_json() for stock in StockModel.query.all()]}
