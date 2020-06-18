@@ -26,7 +26,7 @@ class PositionsModel(db.Model):  # extend db.Model for SQLAlechemy
     unit_cost = db.Column(db.Float(precision=const.PRICE_PRECISION))
     stock_id = db.Column(db.Integer, db.ForeignKey('stock.id'), nullable=False)  # foreign key to stock table
 
-    def __init__(self, symbol, quantity, position_date, unit_cost, stock_id, **kwargs):
+    def __init__(self, symbol, quantity, position_date, unit_cost, stock_id=None, **kwargs):
         super().__init__(**kwargs)
         self.symbol = symbol
         self.quantity = quantity
@@ -34,46 +34,15 @@ class PositionsModel(db.Model):  # extend db.Model for SQLAlechemy
         self.unit_cost = unit_cost
         self.stock_id = stock_id
 
-    '''
-    @classmethod
-    def parse_request_json_with_symbol(cls):
-        """
-        parse symbol and description from request
-        """
-        parser = reqparse.RequestParser()
-        parser.add_argument(
-            name=StockModel.JSON_SYMBOL_STR,
-            type=str,
-            required=True,
-            trim=True,
-            help='Stock symbol is missing')
-        parser.add_argument(
-            name=StockModel.JSON_DESC_STR,
-            type=str,
-            required=True,
-            trim=True,
-            help='Stock description is missing')
-        current_app.logger.debug('in parse')
-        current_app.logger.debug(dict(parser.parse_args()))
-        return parser.parse_args(strict=False)  # only the two argument can be in the request
-        '''
-
     @classmethod
     def parse_request_json(cls):
         """
         parse position details from request
-        {"symbol": <symbol>,
-         "date": <date>,
+        {"date": <date>,
          "quantity": <quantity>,
          "unit_cost": <unit_cost>}
         """
         parser = reqparse.RequestParser()
-        parser.add_argument(
-            name=PositionsModel.JSON_SYMBOL_STR,
-            type=str,
-            required=True,
-            trim=True,
-            help='symbol field is missing')
         parser.add_argument(
             name=PositionsModel.JSON_DATE_STR,
             type=lambda s: date.fromisoformat(s),
@@ -109,10 +78,9 @@ class PositionsModel(db.Model):  # extend db.Model for SQLAlechemy
         """
         return {
             'symbol': self.symbol,
-            'date': self.position_date,
+            'date': self.position_date.strftime('%Y-%m-%d'),
             'quantity': self.quantity,
             'unit_cost': self.unit_cost,
-            'price': self.price,
             'stock_id': self.stock_id
 
         }
@@ -121,9 +89,13 @@ class PositionsModel(db.Model):  # extend db.Model for SQLAlechemy
         """
         insert position details for a stock
         """
-        self.stock_id = StockModel.query
+        current_app.logger.debug('func: save_position_details, symbol={}'.format(self.symbol))
+        self.stock_id = StockModel.find_by_symbol(self.symbol).id
+        current_app.logger.debug(self.json())
         db.session.add(self)
+        current_app.logger.debug('func: save_position_details, after session_add')
         db.session.commit()
+        current_app.logger.debug('func: save_position_details, after commit')
 
     def del_position(self):
         """

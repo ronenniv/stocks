@@ -16,7 +16,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # getting url for PostgresDB in Heroku. default is sqlite3 if DATABASE_URL not defined
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///data.db')
 app.secret_key = 'ronen'
-api = Api(app)
+api = Api(app, catch_all_404s=True)
 
 # setting log configuration
 
@@ -36,9 +36,9 @@ except KeyError:
                         datefmt='%m/%d/%Y %I:%M:%S',
                         level=logging.WARNING)
 
-api.add_resource(Stock, '/stock/<string>:symbol')  # http://hostanme/stock/<symbol name>
-#api.add_resource(Position, '/position/<string:symbol>')  # http://hostanme/stock/<symbol name>
-#api.add_resource(StockList, '/stocks')  # http://hostanme/stocks
+api.add_resource(Stock, '/stock/<string:symbol>')  # http://hostanme/stock/<symbol name>
+api.add_resource(StockList, '/stocks')  # http://hostanme/stocks
+api.add_resource(Position, '/position/<string:symbol>')  # http://hostanme/position/<symbol name>
 
 
 def main():

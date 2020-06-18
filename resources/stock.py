@@ -14,7 +14,8 @@ class Stock(Resource):
         GET request - no json required
         """
         stock = StockModel.find_by_symbol(symbol)
-        return stock.json() if stock else {'message': 'Stock {} not found'.format(symbol)}, HTTPStatus.NOT_FOUND
+        current_app.logger.debug('func: get, stock={}'.format(stock.json()))
+        return stock.json() if stock else ({'message': 'Stock {} not found'.format(symbol)}, HTTPStatus.NOT_FOUND)
 
     def post(self, symbol):
         """

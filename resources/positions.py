@@ -13,7 +13,8 @@ class Position(Resource):
         """
         GET request - no json required
         """
-        current_app.logger.debug('in get position')
+        current_app.logger.debug('func: get, symbol={}'.format(symbol))
+
         positions_list = PositionsModel.find_by_symbol(symbol)
         if positions_list:
             result = [position.json() for position in positions_list]
@@ -26,13 +27,15 @@ class Position(Resource):
         POST request - json required
         {desc: description}
         """
-        current_app.logger.debug('in get position')
+
         position_args = PositionsModel.parse_request_json()
         position = PositionsModel(symbol,
                                   position_args[PositionsModel.JSON_QUANTITY_STR],
                                   position_args[PositionsModel.JSON_DATE_STR],
                                   position_args[PositionsModel.JSON_UNIT_COST_STR])
+        current_app.logger.debug('func: post before save position, position={}'.format(position.json()))
         position.save_position_details()
+        current_app.logger.debug('func: post after save position, position={}'.format(position.json()))
         return position.json(), HTTPStatus.CREATED
 
 '''
