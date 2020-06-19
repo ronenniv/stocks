@@ -41,7 +41,7 @@ api.add_resource(StockList, '/stocks')  # http://hostanme/stocks
 api.add_resource(Position, '/position/<string:symbol>')  # http://hostanme/position/<symbol name>
 
 
-def main():
+def main(*argv, **kwargs):
     from db import db
 
     db.init_app(app)
