@@ -1,0 +1,5 @@
+runtime.txt - contains python version to execute. https://devcenter.heroku.com/articles/python-runtimes
+Procfile - instructions to Heroku which command to run. https://devcenter.heroku.com/articles/getting-started-with-python#define-a-procfile
+uwsgi.ini - ini file for uwsgi which instruct port, module,...
+added to requirement.txt uwsgi for web server, and psycopg2 for PostgreSQL library
+
