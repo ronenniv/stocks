@@ -117,7 +117,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         find record in DB according to symbol
         if found, return object with stock details, otherwise None
         """
-        return cls.query.filter_by(symbol=symbol).one()  # SELECT * FROM stock WHERE symbol=symbol. one raise exception if more than one row
+        return cls.query.filter_by(symbol=symbol).first()  # SELECT * FROM stock WHERE symbol=symbol. one raise exception if more than one row
 
     def json(self) -> dict:
         """
