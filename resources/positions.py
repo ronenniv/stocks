@@ -15,8 +15,7 @@ class Position(Resource):
         """
         current_app.logger.debug('func: get, symbol={}'.format(symbol))
 
-        positions_list = PositionsModel.find_by_symbol(symbol)
-        if positions_list:
+        if positions_list := PositionsModel.find_by_symbol(symbol):
             result = [position.json() for position in positions_list]
             return result
         else:

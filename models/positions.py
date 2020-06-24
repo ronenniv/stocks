@@ -24,14 +24,16 @@ class PositionsModel(db.Model):  # extend db.Model for SQLAlechemy
     position_date = db.Column(db.Date)
     unit_cost = db.Column(db.Float)
     #unit_cost = db.Column(db.Float(precision=const.PRICE_PRECISION))
+    calc_flag = db.Column(db.Boolean)  # indicator for calc
     stock_id = db.Column(db.Integer, db.ForeignKey('stock.id'), nullable=False)  # foreign key to stock table
 
-    def __init__(self, symbol, quantity, position_date, unit_cost, stock_id=None, **kwargs):
+    def __init__(self, symbol, quantity, position_date, unit_cost, calc_flag=False, stock_id=None, **kwargs):
         super().__init__(**kwargs)
         self.symbol = symbol
         self.quantity = quantity
         self.position_date = position_date
         self.unit_cost = unit_cost
+        self.calc_flag = calc_flag
         self.stock_id = stock_id
 
     def __repr__(self):
@@ -89,8 +91,8 @@ class PositionsModel(db.Model):  # extend db.Model for SQLAlechemy
             'date': self.position_date.strftime('%Y-%m-%d'),
             'quantity': self.quantity,
             'unit_cost': self.unit_cost,
+            'calc_flag': self.calc_flag,
             'stock_id': self.stock_id
-
         }
 
     def save_position_details(self):

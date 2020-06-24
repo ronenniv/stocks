@@ -102,8 +102,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
             required=True,
             trim=True,
             help='Stock description is missing')
-        current_app.logger.debug('in parse')
-        current_app.logger.debug(dict(parser.parse_args()))
+        current_app.logger.debug('func: parse_request_json, args={}'.format(dict(parser.parse_args())))
         result = parser.parse_args(strict=False)  # only the one argument can be in the request
         # validation on parse data
         if not cls.parse_validations(desc=result[StockModel.JSON_DESC_STR])['desc']:
@@ -153,11 +152,24 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         :return: True for success, False for failure
         """
         try:
+            current_app.logger.debug('func: save_stock_details, self={}'.format(self))
             db.session.add(self)
             db.session.commit()
             return True
         except IntegrityError:  # unique constraint violation
             current_app.logger.debug('func: save_stock_details, exception: IntegrityError, self: {}'.format(self))
+            db.session.rollback()
+            return False
+
+    def update_stock_symbol_and_desc(self, symbol, desc):
+        """update existing stock symbol and desc
+        :return True if succes, False if error"""
+        try:
+            self.symbol = symbol
+            self.desc = desc
+            db.session.commit()
+            return True
+        except IntegrityError:
             db.session.rollback()
             return False
 
