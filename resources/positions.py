@@ -33,7 +33,7 @@ class Position(Resource):
                                   position_args[PositionsModel.JSON_DATE_STR],
                                   position_args[PositionsModel.JSON_UNIT_COST_STR])
         current_app.logger.debug('func: post before save position, position={}'.format(position.json()))
-        position.save_position_details()
+        position.save_details()
         current_app.logger.debug('func: post after save position, position={}'.format(position.json()))
         return position.json(), HTTPStatus.CREATED
 

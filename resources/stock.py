@@ -23,7 +23,7 @@ class Stock(Resource):
         {desc: description}
         """
         stock = StockModel(symbol, StockModel.parse_request_json()[StockModel.JSON_DESC_STR])
-        if stock.save_stock_details():
+        if stock.save_details():
             return stock.json(), HTTPStatus.CREATED
         else:
             return {'message': 'Stock {} already exist'.format(symbol)}, HTTPStatus.BAD_REQUEST
@@ -37,13 +37,13 @@ class Stock(Resource):
         if stock := StockModel.find_by_symbol(symbol):
             # stock is existing, then need to update symbol and desc
             current_app.logger.debug('func: put, stock found')
-            return stock.json() if stock.update_stock_symbol_and_desc(**stock_req) \
+            return stock.json() if stock.update_symbol_and_desc(**stock_req) \
                 else ({'message': 'error when saving stock {}'.format(symbol)}, HTTPStatus.BAD_REQUEST)
         else:
             current_app.logger.debug('func: put, stock not found')
             # stock not found, then create new one
             stock = StockModel(**stock_req)
-            return stock.json() if stock.save_stock_details() \
+            return stock.json() if stock.save_details() \
                 else ({'message': 'error when saving stock {}'.format(symbol)}, HTTPStatus.BAD_REQUEST)
 
     def delete(self, symbol):

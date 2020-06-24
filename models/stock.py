@@ -146,7 +146,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
                 [position.json() for position in self.positions.all()]
         }
 
-    def save_stock_details(self) -> bool:
+    def save_details(self) -> bool:
         """
         update or insert symbol and desc for stock
         :return: True for success, False for failure
@@ -161,7 +161,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
             db.session.rollback()
             return False
 
-    def update_stock_symbol_and_desc(self, symbol, desc):
+    def update_symbol_and_desc(self, symbol, desc):
         """update existing stock symbol and desc
         :return True if succes, False if error"""
         try:
@@ -172,6 +172,17 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         except IntegrityError:
             db.session.rollback()
             return False
+
+    def calc_unit_cost_and_quantity(self, unit_cost, quantity):
+        """calculate the unit cost and the quantity according to the position"""
+        current_app.logger.debug('func: calc_unit_cost_and_quantity before calc, self={}'.format(self))
+        self.unit_cost = round(
+            ((self.unit_cost * self.quantity) + (unit_cost * quantity)) / (self.quantity + quantity),
+            const.PRICE_PRECISION)
+        self.quantity = self.quantity + quantity
+        current_app.logger.debug('func: calc_unit_cost_and_quantity after calc, self={}'.format(self))
+        db.session.commit()
+
 
     def del_stock(self) -> bool:
         """

@@ -95,17 +95,22 @@ class PositionsModel(db.Model):  # extend db.Model for SQLAlechemy
             'stock_id': self.stock_id
         }
 
-    def save_position_details(self):
+    def save_details(self):
         """
         insert position details for a stock
         """
-        current_app.logger.debug('func: save_position_details, self={}'.format(self))
         self.stock_id = StockModel.find_by_symbol(self.symbol).id
-        current_app.logger.debug(self.json())
+        current_app.logger.debug('func: save_details, self={}'.format(self.json()))
         db.session.add(self)
-        current_app.logger.debug('func: save_position_details, after session_add')
         db.session.commit()
-        current_app.logger.debug('func: save_position_details, after commit')
+        current_app.logger.debug('func: save_details, after commit')
+        # adding for calc unit_cost and quantity. edit properly TODO
+        stock = StockModel.find_by_symbol(self.symbol)
+        current_app.logger.debug('func: save_details, stock={}'.format(stock))
+        stock.calc_unit_cost_and_quantity(self.unit_cost, self.quantity)
+        self.calc_flag = True
+        db.session.commit()
+
 
     def del_position(self):
         """
