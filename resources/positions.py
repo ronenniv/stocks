@@ -37,7 +37,7 @@ class Position(Resource):
         current_app.logger.debug('func: post after save position, position={}'.format(position.json()))
         return position.json(), HTTPStatus.CREATED
 
-'''
+    '''
     def put(self, symbol):
         """
         PUT request - json required
@@ -47,15 +47,19 @@ class Position(Resource):
         stock = StockModel(**stock_req)
         stock.save_stock_details()
         return stock.json()
+    '''
 
     def delete(self, symbol):
         """
         DEL request - no json required
         """
-        stock = StockModel.find_by_symbol(symbol)
-        if stock:
-            stock.del_stock()
-            return stock.json()
+        position_id = PositionsModel.parse_request_json_position_id()['position_id']
+        current_app.logger.debug('func: delete, position_id={}'.format(position_id))
+        if position := PositionsModel.find_by_position_id(position_id):
+            current_app.logger.debug('func: delete, position={}'.format(position))
+            return position.json() if position.del_position(symbol) \
+                       else \
+                       {'message': 'error when trying to delete position {}'.format(position_id)}, \
+                        HTTPStatus.BAD_REQUEST
         else:
-            return {'message': 'Stock {} not found'.format(symbol)}, HTTPStatus.NOT_FOUND
-'''
+            return {'message': 'Position {} not found'.format(position_id)}, HTTPStatus.NOT_FOUND

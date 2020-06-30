@@ -1,4 +1,4 @@
-from flask import current_app # for debugging
+from flask import current_app  # for debugging
 
 from flask_restful import Resource
 
@@ -15,7 +15,8 @@ class Stock(Resource):
         """
         if stock := StockModel.find_by_symbol(symbol):
             current_app.logger.debug('func: get, stock={}'.format(stock.json()))
-        return stock.detailed_json() if stock else ({'message': 'Stock {} not found'.format(symbol)}, HTTPStatus.NOT_FOUND)
+        return stock.detailed_json() if stock else (
+        {'message': 'Stock {} not found'.format(symbol)}, HTTPStatus.NOT_FOUND)
 
     def post(self, symbol):
         """
@@ -51,7 +52,8 @@ class Stock(Resource):
         DEL request - no json required
         """
         if stock := StockModel.find_by_symbol(symbol):
-            return stock.json() if stock.del_stock() else ({'message': 'error when delete'}, HTTPStatus.CONFLICT)
+            return stock.json() if stock.del_stock() \
+                else ({'message': 'error when trying to delete stock {}'.format(symbol)}, HTTPStatus.CONFLICT)
         else:
             return {'message': 'Stock {} not found'.format(symbol)}, HTTPStatus.NOT_FOUND
 

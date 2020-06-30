@@ -163,7 +163,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
 
     def update_symbol_and_desc(self, symbol, desc):
         """update existing stock symbol and desc
-        :return True if succes, False if error"""
+        :return True if success, False if error"""
         try:
             self.symbol = symbol
             self.desc = desc
@@ -174,12 +174,18 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
             return False
 
     def calc_unit_cost_and_quantity(self, unit_cost, quantity):
-        """calculate the unit cost and the quantity according to the position"""
+        """calculate the unit cost and the quantity according to the position
+        positive quantity for adding, negative quantity for removing"""
         current_app.logger.debug('func: calc_unit_cost_and_quantity before calc, self={}'.format(self))
-        self.unit_cost = round(
-            ((self.unit_cost * self.quantity) + (unit_cost * quantity)) / (self.quantity + quantity),
-            const.PRICE_PRECISION)
-        self.quantity = self.quantity + quantity
+        try:
+            self.unit_cost = round(
+                ((self.unit_cost * self.quantity) + (unit_cost * quantity)) / (self.quantity + quantity),
+                const.PRICE_PRECISION)
+            self.quantity = self.quantity + quantity
+        except ZeroDivisionError:
+            # all positions are sold -> quantity is zero
+            self.unit_cost = 0
+            self.quantity = 0
         current_app.logger.debug('func: calc_unit_cost_and_quantity after calc, self={}'.format(self))
         db.session.commit()
 
@@ -189,11 +195,13 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         delete stock from DB
         :return: True for success, False for failure
         """
+        # TODO delete positions when exist
+        current_app.logger.debug('func: del_stock, exception: IntegrityError, self: {}'.format(self))
         try:
             db.session.delete(self)
             db.session.commit()
             return True
         except IntegrityError:  # unique constraint violation
-            current_app.logger.debug('func: del_stock, exception: IntegrityError, self: {}'.format(self))
+            current_app.logger.debug('func: del_stock, exception: IntegrityError')
             db.session.rollback()
             return False
