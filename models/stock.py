@@ -26,7 +26,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
 
     # this definition comes together with the define in
     # PositionsModel. Lazy will ask to not create entries for positions
-    positions = db.relationship('PositionsModel', lazy='dynamic')
+    positions = db.relationship('PositionsModel', lazy='dynamic', backref='stock', cascade='all')
 
     def __init__(self, symbol, desc, **kwargs):
         super().__init__(**kwargs)
@@ -198,7 +198,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         # TODO delete positions when exist
         current_app.logger.debug('func: del_stock, exception: IntegrityError, self: {}'.format(self))
         try:
-            db.session.delete(self)
+            db.session.delete(self)  # del will cascade to positions deletion
             db.session.commit()
             return True
         except IntegrityError:  # unique constraint violation
