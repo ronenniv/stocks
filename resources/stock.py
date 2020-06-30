@@ -13,6 +13,7 @@ class Stock(Resource):
         """
         GET request - no json required
         """
+        symbol = symbol.upper()
         if stock := StockModel.find_by_symbol(symbol):
             current_app.logger.debug('func: get, stock={}'.format(stock.json()))
         return stock.detailed_json() if stock else (
@@ -23,6 +24,7 @@ class Stock(Resource):
         POST request - json required
         {desc: description}
         """
+        symbol = symbol.upper()
         stock = StockModel(symbol, StockModel.parse_request_json()[StockModel.JSON_DESC_STR])
         if stock.save_details():
             return stock.json(), HTTPStatus.CREATED
@@ -34,6 +36,7 @@ class Stock(Resource):
         PUT request - json required
         {symbol: symbol name, desc: description}
         """
+        symbol = symbol.upper()
         stock_req = StockModel.parse_request_json_with_symbol()  # get symbol, desc
         if stock := StockModel.find_by_symbol(symbol):
             # stock is existing, then need to update symbol and desc
@@ -51,6 +54,7 @@ class Stock(Resource):
         """
         DEL request - no json required
         """
+        symbol = symbol.upper()
         if stock := StockModel.find_by_symbol(symbol):
             return stock.detailed_json() if stock.del_stock() \
                 else ({'message': 'error when trying to delete stock {}'.format(symbol)}, HTTPStatus.CONFLICT)

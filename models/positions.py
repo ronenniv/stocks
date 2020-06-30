@@ -121,20 +121,24 @@ class PositionsModel(db.Model):  # extend db.Model for SQLAlechemy
             'stock_id': self.stock_id
         }
 
-    def save_details(self):
+    def save_details(self) -> bool:
         """
         insert position details for a stock
         """
-        stock = StockModel.find_by_symbol(self.symbol)
-        self.stock_id = stock.id
-        current_app.logger.debug('func: save_details, self={}'.format(self.json()))
-        db.session.add(self)
-        # find the stock and update its unit_cost and quantity
-        current_app.logger.debug('func: save_details, stock={}'.format(stock))
-        # calc by adding unit_cost and quantity to existing
-        stock.calc_unit_cost_and_quantity(self.unit_cost, self.quantity)
-        self.calc_flag = True  # set the flag to show position got calculated
-        db.session.commit()
+        if stock := StockModel.find_by_symbol(self.symbol):
+            self.stock_id = stock.id
+            current_app.logger.debug('func: save_details, self={}'.format(self.json()))
+            db.session.add(self)
+            # find the stock and update its unit_cost and quantity
+            current_app.logger.debug('func: save_details, stock={}'.format(stock))
+            # calc by adding unit_cost and quantity to existing
+            stock.calc_unit_cost_and_quantity(self.unit_cost, self.quantity)
+            self.calc_flag = True  # set the flag to show position got calculated
+            db.session.commit()
+            return True
+        else:
+            # stock not found
+            return False
 
     def del_position(self, symbol) -> bool:
         """

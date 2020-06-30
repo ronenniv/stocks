@@ -13,6 +13,7 @@ class Position(Resource):
         """
         GET request - no json required
         """
+        symbol = symbol.upper()
         current_app.logger.debug('func: get, symbol={}'.format(symbol))
 
         if positions_list := PositionsModel.find_by_symbol(symbol):
@@ -26,16 +27,18 @@ class Position(Resource):
         POST request - json required
         {desc: description}
         """
-
+        symbol = symbol.upper()
         position_args = PositionsModel.parse_request_json()
         position = PositionsModel(symbol,
                                   position_args[PositionsModel.JSON_QUANTITY_STR],
                                   position_args[PositionsModel.JSON_DATE_STR],
                                   position_args[PositionsModel.JSON_UNIT_COST_STR])
         current_app.logger.debug('func: post before save position, position={}'.format(position.json()))
-        position.save_details()
-        current_app.logger.debug('func: post after save position, position={}'.format(position.json()))
-        return position.json(), HTTPStatus.CREATED
+        if position.save_details():
+            current_app.logger.debug('func: post after save position, position={}'.format(position.json()))
+            return position.json(), HTTPStatus.CREATED
+        else:
+            return {'message': 'Stock {} cannot be found'.format(symbol)}
 
     '''
     def put(self, symbol):
@@ -53,6 +56,7 @@ class Position(Resource):
         """
         DEL request - no json required
         """
+        symbol = symbol.upper()
         position_id = PositionsModel.parse_request_json_position_id()['position_id']
         current_app.logger.debug('func: delete, position_id={}'.format(position_id))
         if position := PositionsModel.find_by_position_id(position_id):

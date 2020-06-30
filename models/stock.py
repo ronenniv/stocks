@@ -67,7 +67,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         parser = reqparse.RequestParser()
         parser.add_argument(
             name=StockModel.JSON_SYMBOL_STR,
-            type=str,
+            type=str.upper(),
             required=True,
             trim=True,
             help='Stock symbol is missing')
@@ -116,8 +116,8 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         find record in DB according to symbol
         if found, return object with stock details, otherwise None
         """
-        return cls.query.filter_by(
-            symbol=symbol).first()  # SELECT * FROM stock WHERE symbol=symbol. one raise exception if more than one row
+        # SELECT * FROM stock WHERE symbol=symbol
+        return cls.query.filter_by(symbol=symbol).first()
 
     def json(self) -> dict:
         """
