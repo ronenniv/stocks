@@ -143,14 +143,14 @@ class PositionsModel(db.Model):  # extend db.Model for SQLAlechemy
         """
         # find the stock and calculate the updated unit_cost and quantity
         stock = StockModel.find_by_symbol(symbol)
-        if stock.id == self.stock_id:
+        if self in stock.positions:  # check if the position belongs to the stock
             db.session.delete(self)
             current_app.logger.debug('func: del_position, stock={}'.format(stock.detailed_json()))
             stock.calc_unit_cost_and_quantity(self.unit_cost, -self.quantity)
             db.session.commit()
             return True
         else:
-            # not match between position stock id and the stock symbol
+            # not match between position and the stock symbol
             return False
 
 

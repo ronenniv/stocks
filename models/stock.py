@@ -116,7 +116,8 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         find record in DB according to symbol
         if found, return object with stock details, otherwise None
         """
-        return cls.query.filter_by(symbol=symbol).first()  # SELECT * FROM stock WHERE symbol=symbol. one raise exception if more than one row
+        return cls.query.filter_by(
+            symbol=symbol).first()  # SELECT * FROM stock WHERE symbol=symbol. one raise exception if more than one row
 
     def json(self) -> dict:
         """
@@ -189,13 +190,11 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         current_app.logger.debug('func: calc_unit_cost_and_quantity after calc, self={}'.format(self))
         db.session.commit()
 
-
     def del_stock(self) -> bool:
         """
         delete stock from DB
         :return: True for success, False for failure
         """
-        # TODO delete positions when exist
         current_app.logger.debug('func: del_stock, exception: IntegrityError, self: {}'.format(self))
         try:
             db.session.delete(self)  # del will cascade to positions deletion

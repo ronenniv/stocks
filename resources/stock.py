@@ -52,7 +52,7 @@ class Stock(Resource):
         DEL request - no json required
         """
         if stock := StockModel.find_by_symbol(symbol):
-            return stock.json() if stock.del_stock() \
+            return stock.detailed_json() if stock.del_stock() \
                 else ({'message': 'error when trying to delete stock {}'.format(symbol)}, HTTPStatus.CONFLICT)
         else:
             return {'message': 'Stock {} not found'.format(symbol)}, HTTPStatus.NOT_FOUND
