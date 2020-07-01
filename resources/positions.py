@@ -44,7 +44,7 @@ class Position(Resource):
     def put(self, symbol):
         """
         PUT request - json required
-        {symbol: symbol name, desc: description}
+        {date: symbol name, desc: description}
         """
         stock_req = StockModel.parse_request_json_with_symbol()
         stock = StockModel(**stock_req)
@@ -67,3 +67,12 @@ class Position(Resource):
                         HTTPStatus.BAD_REQUEST
         else:
             return {'message': 'Position {} not found'.format(position_id)}, HTTPStatus.NOT_FOUND
+
+
+class PositionsList(Resource):
+
+    def get(self):
+        """
+        GET request - no json required
+        """
+        return {'positions': [position.json() for position in PositionsModel.query.all()]}

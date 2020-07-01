@@ -157,10 +157,3 @@ class PositionsModel(db.Model):  # extend db.Model for SQLAlechemy
             # not match between position and the stock symbol
             return False
 
-
-    def get_stock_id(self):
-        """
-        search for stock id according to the stock symbol
-        :return:
-        """
-        pass
