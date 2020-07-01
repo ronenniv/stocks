@@ -24,7 +24,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
     unit_cost = db.Column(db.Float(precision=const.PRICE_PRECISION))
     price = db.Column(db.Float(precision=const.PRICE_PRECISION))
 
-    # this definition comes together with the define in
+    # this definition comes together with the definition in
     # PositionsModel. Lazy will ask to not create entries for positions
     positions = db.relationship('PositionsModel', lazy='dynamic', backref='stock', cascade='all')
 
@@ -63,11 +63,12 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
     def parse_request_json_with_symbol(cls):
         """
         parse symbol and description from request
+        :return parsed args as dict
         """
         parser = reqparse.RequestParser()
         parser.add_argument(
             name=StockModel.JSON_SYMBOL_STR,
-            type=str.upper(),
+            type=str.upper,
             required=True,
             trim=True,
             help='Stock symbol is missing')
@@ -78,8 +79,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
             trim=True,
             help='Stock description is missing')
         result = parser.parse_args(strict=False)  # only the two argument can be in the request
-        current_app.logger.debug('in parse')
-        current_app.logger.debug(dict(parser.parse_args()))
+        current_app.logger.debug('func: parse_request_json_with_symbol, args={}'.format(dict(parser.parse_args())))
 
         # validation on parse data
         validation_result = cls.parse_validations(**result)
@@ -94,6 +94,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
     def parse_request_json(cls):
         """
         parse desc from request
+        :return parsed arg as dict
         """
         parser = reqparse.RequestParser()
         parser.add_argument(
@@ -152,8 +153,8 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         update or insert symbol and desc for stock
         :return: True for success, False for failure
         """
+        current_app.logger.debug('func: save_stock_details, self={}'.format(self))
         try:
-            current_app.logger.debug('func: save_stock_details, self={}'.format(self))
             db.session.add(self)
             db.session.commit()
             return True
@@ -191,11 +192,9 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         db.session.commit()
 
     def del_stock(self) -> bool:
-        """
-        delete stock from DB
-        :return: True for success, False for failure
-        """
-        current_app.logger.debug('func: del_stock, exception: IntegrityError, self: {}'.format(self))
+        """delete stock from DB
+        :return: True for success, False for failure"""
+        current_app.logger.debug('func: del_stock, self: {}'.format(self))
         try:
             db.session.delete(self)  # del will cascade to positions deletion
             db.session.commit()
