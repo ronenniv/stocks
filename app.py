@@ -9,6 +9,8 @@ from flask_restful import Api
 
 from resources.stock import Stock, StockList
 from resources.positions import Position, PositionsList
+from resources.cash import Cash
+
 
 app = Flask(__name__)
 # turning off the flask sqlalchmey sync tracker
@@ -40,6 +42,7 @@ api.add_resource(Stock, '/stock/<string:symbol>')  # http://hostanme/stock/<symb
 api.add_resource(StockList, '/stocks')  # http://hostanme/stocks
 api.add_resource(Position, '/position/<string:symbol>')  # http://hostanme/position/<symbol name>
 api.add_resource(PositionsList, '/positions')  # http://hostanme/positions
+api.add_resource(Cash, '/cash')  # http://hostanme/cash
 
 
 def main():
