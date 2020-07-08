@@ -15,9 +15,11 @@ class Stock(Resource):
         """
         symbol = symbol.upper()
         if stock := StockModel.find_by_symbol(symbol):
-            current_app.logger.debug('func: get, stock={}'.format(stock.json()))
-        return stock.detailed_json() if stock else (
-        {'message': 'Stock {} not found'.format(symbol)}, HTTPStatus.NOT_FOUND)
+            stock.get_current_price()
+            current_app.logger.debug('func: get, self={}'.format(stock.json()))
+            return stock.detailed_json()
+        else:
+            return {'message': 'Stock {} not found'.format(symbol)}, HTTPStatus.NOT_FOUND
 
     def post(self, symbol):
         """

@@ -6,3 +6,5 @@ Flask-SQLAlchemy==2.4.3
 SQLAlchemy~=1.3.17
 uwsgi
 psycopg2
+
+requests~=2.24.0

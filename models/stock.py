@@ -6,6 +6,8 @@ from flask_restful import reqparse, abort
 
 from sqlalchemy.exc import IntegrityError
 
+import requests, requests.exceptions
+
 import models.constants as const
 
 
@@ -22,7 +24,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
     desc = db.Column(db.String(const.DESC_MAX_LEN))
     quantity = db.Column(db.Integer())
     unit_cost = db.Column(db.Float(precision=const.PRICE_PRECISION))
-    price = db.Column(db.Float(precision=const.PRICE_PRECISION))
+    #price = db.Column(db.Float(precision=const.PRICE_PRECISION))
 
     # this definition comes together with the definition in
     # PositionsModel. Lazy will ask to not create entries for positions
@@ -124,6 +126,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         """
         create JSON for the stock details
         """
+        self.get_current_price()  # get the current stock price
         return {
             'id': self.id,
             'symbol': self.symbol,
@@ -137,16 +140,9 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         """
         create JSON for the stock details and stock's positions
         """
-        return {
-            'id': self.id,
-            'symbol': self.symbol,
-            'desc': self.desc,
-            'quantity': self.quantity,
-            'unit_cost': self.unit_cost,
-            'price': self.price,
-            'positions':
-                [position.json() for position in self.positions.all()]
-        }
+        positions_list = {'positions':
+                [position.json() for position in self.positions.all()]}
+        return {**self.json(), **positions_list}
 
     def save_details(self) -> bool:
         """
@@ -190,6 +186,31 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
             self.quantity = 0
         current_app.logger.debug('func: calc_unit_cost_and_quantity after calc, self={}'.format(self))
         db.session.commit()
+
+    def get_current_price(self):
+        """get current stock price from finnhub"""
+        quote_api_url = const.FINNHUB_URL + "/quote"
+        try:
+            response = requests.get(quote_api_url,
+                                    params={'symbol': self.symbol, 'token': const.TOKEN},
+                                    timeout=0.5
+                                    )
+            current_app.logger.debug(f'url={response.url}')
+            response.raise_for_status()
+        except requests.exceptions.ConnectTimeout as e:
+            current_app.logger.debug('func: get_current_price Exception {}'.format(e))
+            self.price = 'ERR'
+        except Exception as e:
+            current_app.logger.debug('func: get_current_price Exception {}'.format(e))
+            self.price = 'ERR'
+        else:
+            json_response = response.json()
+            if 'error' in json_response:
+                # symbol not found
+                current_app.logger.error(f'func: get_current_price, symbol {self.symbol} not found')
+                self.price = 'ERR'
+            else:
+                self.price = json_response['c']
 
     def del_stock(self) -> bool:
         """delete stock from DB
