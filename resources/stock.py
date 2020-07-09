@@ -15,11 +15,10 @@ class Stock(Resource):
         """
         symbol = symbol.upper()
         if stock := StockModel.find_by_symbol(symbol):
-            stock.get_current_price()
-            current_app.logger.debug('func: get, self={}'.format(stock.json()))
+            # stock exist in DB
             return stock.detailed_json()
         else:
-            return {'message': 'Stock {} not found'.format(symbol)}, HTTPStatus.NOT_FOUND
+            return {'message': f'Stock {symbol} not found'}, HTTPStatus.NOT_FOUND
 
     def post(self, symbol):
         """
@@ -29,9 +28,10 @@ class Stock(Resource):
         symbol = symbol.upper()
         stock = StockModel(symbol, StockModel.parse_request_json()[StockModel.JSON_DESC_STR])
         if stock.save_details():
+            # stock created in DB
             return stock.json(), HTTPStatus.CREATED
         else:
-            return {'message': 'Stock {} already exist'.format(symbol)}, HTTPStatus.BAD_REQUEST
+            return {'message': f'Stock {symbol} already exist'}, HTTPStatus.BAD_REQUEST
 
     def put(self, symbol):
         """
@@ -39,18 +39,16 @@ class Stock(Resource):
         {symbol: symbol name, desc: description}
         """
         symbol = symbol.upper()
-        stock_req = StockModel.parse_request_json_with_symbol()  # get symbol, desc
+        stock_req = StockModel.parse_request_json_with_symbol()  # get symbol, desc from payload
         if stock := StockModel.find_by_symbol(symbol):
-            # stock is existing, then need to update symbol and desc
-            current_app.logger.debug('func: put, stock found')
+            # stock is exist, then need to update symbol and desc
             return stock.json() if stock.update_symbol_and_desc(**stock_req) \
-                else ({'message': 'error when saving stock {}'.format(symbol)}, HTTPStatus.BAD_REQUEST)
+                else ({'message': f'Error when saving stock {symbol}'}, HTTPStatus.BAD_REQUEST)
         else:
-            current_app.logger.debug('func: put, stock not found')
             # stock not found, then create new one
             stock = StockModel(**stock_req)
             return stock.json() if stock.save_details() \
-                else ({'message': 'error when saving stock {}'.format(symbol)}, HTTPStatus.BAD_REQUEST)
+                else ({'message': f'Error when saving stock {symbol}'}, HTTPStatus.BAD_REQUEST)
 
     def delete(self, symbol):
         """
@@ -58,8 +56,9 @@ class Stock(Resource):
         """
         symbol = symbol.upper()
         if stock := StockModel.find_by_symbol(symbol):
+            # stock exist in DB
             return stock.detailed_json() if stock.del_stock() \
-                else ({'message': 'error when trying to delete stock {}'.format(symbol)}, HTTPStatus.CONFLICT)
+                else ({'message': f'Error when trying to delete stock {symbol}'}, HTTPStatus.CONFLICT)
         else:
             return {'message': 'Stock {} not found'.format(symbol)}, HTTPStatus.NOT_FOUND
 

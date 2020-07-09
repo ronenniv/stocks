@@ -49,26 +49,22 @@ class PositionsModel(db.Model):  # extend db.Model for SQLAlechemy
          "unit_cost": <unit_cost>}
         """
         parser = reqparse.RequestParser()
-        parser.add_argument(
-            name=PositionsModel.JSON_DATE_STR,
-            type=lambda s: date.fromisoformat(s),
-            required=True,
-            trim=True,
-            help='date field is missing or invalid')
-        parser.add_argument(
-            name=PositionsModel.JSON_QUANTITY_STR,
-            type=int,
-            required=True,
-            trim=True,
-            help='quantity field is missing or invalid')
-        parser.add_argument(
-            name=PositionsModel.JSON_UNIT_COST_STR,
-            type=float,
-            required=True,
-            trim=True,
-            help='unit cost is missing or invalid')
-        current_app.logger.debug(dict(parser.parse_args()))
-        return parser.parse_args(strict=True)  # only the one argument can be in the request
+        parser.add_argument(name=PositionsModel.JSON_DATE_STR,
+                            type=lambda s: date.fromisoformat(s),
+                            required=True,
+                            trim=True,
+                            help='Date is missing or invalid')
+        parser.add_argument(name=PositionsModel.JSON_QUANTITY_STR,
+                            type=int,
+                            required=True,
+                            trim=True,
+                            help='Quantity is missing or invalid')
+        parser.add_argument(name=PositionsModel.JSON_UNIT_COST_STR,
+                            type=float,
+                            required=True,
+                            trim=True,
+                            help='Unit cost is missing or invalid')
+        return parser.parse_args(strict=True)  # only the specific argument can be in the request
 
     @classmethod
     def parse_request_json_position_id(cls):
@@ -77,28 +73,25 @@ class PositionsModel(db.Model):  # extend db.Model for SQLAlechemy
         {"position_id": <position_id>
         """
         parser = reqparse.RequestParser()
-        parser.add_argument(
-            name=PositionsModel.JSON_POSITION_ID_STR,
-            type=int,
-            required=True,
-            trim=True,
-            help='position id field is missing or invalid')
-        current_app.logger.debug('func: parse_request_json_position_id, parse={}'.format(dict(parser.parse_args())))
+        parser.add_argument(name=PositionsModel.JSON_POSITION_ID_STR,
+                            type=int,
+                            required=True,
+                            trim=True,
+                            help='Position id is missing or invalid')
         return parser.parse_args(strict=True)  # only the one argument can be in the request
 
     @classmethod
     def find_by_symbol(cls, symbol):
         """
-        find record in DB according to symbol
-        if found, return object with stock details, otherwise None
+        find stock in DB according to symbol
+        if found, return list of positions for the stock, else None
         """
-        stock = StockModel.find_by_symbol(symbol)
-        if stock:
-            stock_id = stock.id
+        if stock := StockModel.find_by_symbol(symbol):
+            # if stock exist, get all positions according to stock id
+            return cls.query.filter_by(stock_id=stock.id).order_by(
+                PositionsModel.position_date).all()  # SQLAlchemy -> SELECT * FROM position WHERE stock_id=stock_id
         else:
             return None
-        return cls.query.filter_by(stock_id=stock_id).order_by(
-            PositionsModel.position_date).all()  # SQLAlchemy -> SELECT * FROM position WHERE stock_id=stock_id
 
     @classmethod
     def find_by_position_id(cls, position_id):
@@ -126,11 +119,9 @@ class PositionsModel(db.Model):  # extend db.Model for SQLAlechemy
         insert position details for a stock
         """
         if stock := StockModel.find_by_symbol(self.symbol):
+            # stock is in DB, then add position and update stock quantity and cost
             self.stock_id = stock.id
-            current_app.logger.debug('func: save_details, self={}'.format(self.json()))
             db.session.add(self)
-            # find the stock and update its unit_cost and quantity
-            current_app.logger.debug('func: save_details, stock={}'.format(stock))
             # calc by adding unit_cost and quantity to existing
             stock.calc_unit_cost_and_quantity(self.unit_cost, self.quantity)
             self.calc_flag = True  # set the flag to show position got calculated
@@ -149,7 +140,6 @@ class PositionsModel(db.Model):  # extend db.Model for SQLAlechemy
         stock = StockModel.find_by_symbol(symbol)
         if self in stock.positions:  # check if the position belongs to the stock
             db.session.delete(self)
-            current_app.logger.debug('func: del_position, stock={}'.format(stock.detailed_json()))
             stock.calc_unit_cost_and_quantity(self.unit_cost, -self.quantity)
             db.session.commit()
             return True

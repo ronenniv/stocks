@@ -1,3 +1,4 @@
+# this file is required for Heroku deployment
 from app import app
 
 from db import db

@@ -18,32 +18,30 @@ class CashModel(db.Model):  # extend db.Model for SQLAlechemy
     id = db.Column(db.Integer, primary_key=True)
     balance = db.Column(db.Float(precision=const.PRICE_PRECISION), nullable=False)
 
-    def __init__(self, id=1, balance=0, **kwargs):
+    def __init__(self, balance=0, **kwargs):
         super().__init__(**kwargs)
-        self.id = id
+        self.id = 1  # only the first row
         self.balance = balance
 
     def __repr__(self):
         return str(self.json())
 
     @classmethod
-    def parse_request_json(cls):
+    def parse_balance_from_json(cls):
         """
         parse desc from request
-        :return parsed arg as dict
+        :return balance from JSON
         """
         parser = reqparse.RequestParser()
-        parser.add_argument(
-            name=CashModel.JSON_BALANCE_STR,
-            type=float,
-            required=True,
-            trim=True,
-            help='Balance amount is missing')
-        current_app.logger.debug('func: parse_request_json, args={}'.format(dict(parser.parse_args())))
-        result = parser.parse_args(strict=False)  # only the one argument can be in the request
+        parser.add_argument(name=CashModel.JSON_BALANCE_STR,
+                            type=float,
+                            required=True,
+                            trim=True,
+                            help='Balance amount is missing')
+        result = parser.parse_args(strict=True)  # only the one argument can be in the request
         # validation on parse data
         # TODO implement validations
-        return result
+        return result[CashModel.JSON_BALANCE_STR]
 
     def json(self) -> dict:
         """
@@ -67,17 +65,16 @@ class CashModel(db.Model):  # extend db.Model for SQLAlechemy
             db.session.add(self)
             db.session.commit()
             return True
-        except IntegrityError:  # unique constraint violation
-            current_app.logger.debug('func: save_details, exception: IntegrityError, self: {}'.format(self))
+        except IntegrityError as e:  # unique constraint violation
+            current_app.logger.error(f'func: save_details, exception {e}, self: {self}')
             db.session.rollback()
             return False
 
-    def update_details(self, balance=0.0) -> bool:
+    def update_details(self) -> bool:
         """
         update or insert cash balance
         :return: True for success, False for failure
         """
-        current_app.logger.debug('func: update_details1, self={}'.format(self))
         if cash := CashModel.get_details():
             # cash row already created. update balance
             self.id = cash.id
@@ -91,8 +88,8 @@ class CashModel(db.Model):  # extend db.Model for SQLAlechemy
                 db.session.commit()
                 current_app.logger.debug('func: update_details4, self={}'.format(self))
                 return True
-            except IntegrityError:  # unique constraint violation
-                current_app.logger.debug('func: update_details5, exception: IntegrityError, self: {}'.format(self))
+            except IntegrityError as e:  # unique constraint violation
+                current_app.logger.error(f'func: update_details, exception {e}, self: {self}')
                 db.session.rollback()
                 return False
 

@@ -22,8 +22,8 @@ class Cash(Resource):
         {balance: amount}
         """
         cash = CashModel()
-        cash.balance = cash.parse_request_json()[CashModel.JSON_BALANCE_STR]  # get balance from JSON
-        return cash.json() if cash.save_details() else ({'message': 'Error in save_details'}, HTTPStatus.BAD_REQUEST)
+        cash.balance = cash.parse_balance_from_json()  # get balance from JSON
+        return cash.json() if cash.save_details() else ({'message': 'Error in saving balance'}, HTTPStatus.BAD_REQUEST)
 
     def put(self):
         """
@@ -31,13 +31,7 @@ class Cash(Resource):
         {balance: amount}
         """
         cash = CashModel()
-        cash.balance = cash.parse_request_json()[CashModel.JSON_BALANCE_STR]
+        cash.balance = cash.parse_balance_from_json()
 
-        return cash.json() if cash.update_details(cash.balance) \
-            else ({'message': 'Error in update_details'}, HTTPStatus.BAD_REQUEST)
-
-    def delete(self, symbol):
-        """
-        DEL request - no json required
-        """
-        pass
+        return cash.json() if cash.update_details() \
+            else ({'message': 'Error in updating balance'}, HTTPStatus.BAD_REQUEST)

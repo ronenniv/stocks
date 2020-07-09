@@ -1,4 +1,4 @@
-from flask import current_app # for debugging
+from flask import current_app  # for debugging
 
 from flask_restful import Resource
 
@@ -17,15 +17,17 @@ class Position(Resource):
         current_app.logger.debug('func: get, symbol={}'.format(symbol))
 
         if positions_list := PositionsModel.find_by_symbol(symbol):
-            result = [position.json() for position in positions_list]
-            return result
+            # positions for symbol exist in DB
+            return [position.json() for position in positions_list]
         else:
-            return {'message': 'Positions for symbol {} not found'.format(symbol)}, HTTPStatus.NOT_FOUND
+            return {'message': f'Positions for symbol {symbol} not found'}, HTTPStatus.NOT_FOUND
 
     def post(self, symbol):
         """
         POST request - json required
-        {desc: description}
+        {date: YYYY-MM-DD,
+        quantity: int,
+        unit_cost: float}
         """
         symbol = symbol.upper()
         position_args = PositionsModel.parse_request_json()
@@ -33,12 +35,12 @@ class Position(Resource):
                                   position_args[PositionsModel.JSON_QUANTITY_STR],
                                   position_args[PositionsModel.JSON_DATE_STR],
                                   position_args[PositionsModel.JSON_UNIT_COST_STR])
-        current_app.logger.debug('func: post before save position, position={}'.format(position.json()))
         if position.save_details():
-            current_app.logger.debug('func: post after save position, position={}'.format(position.json()))
+            # position saved to DB
             return position.json(), HTTPStatus.CREATED
         else:
-            return {'message': 'Stock {} cannot be found'.format(symbol)}
+            # error with saving positions
+            return {'message': f'Position cannot be saved check if stock {symbol} exist'}
 
     '''
     def put(self, symbol):
@@ -54,19 +56,18 @@ class Position(Resource):
 
     def delete(self, symbol):
         """
-        DEL request - no json required
+        DEL request
+        {position_id: int}
         """
         symbol = symbol.upper()
         position_id = PositionsModel.parse_request_json_position_id()['position_id']
-        current_app.logger.debug('func: delete, position_id={}'.format(position_id))
         if position := PositionsModel.find_by_position_id(position_id):
-            current_app.logger.debug('func: delete, position={}'.format(position))
+            # position exist in DB
             return position.json() if position.del_position(symbol) \
-                       else \
-                       {'message': 'error when trying to delete position {}'.format(position_id)}, \
-                        HTTPStatus.BAD_REQUEST
+                       else {'message': f'Error when trying to delete position {position_id}'}, HTTPStatus.BAD_REQUEST
         else:
-            return {'message': 'Position {} not found'.format(position_id)}, HTTPStatus.NOT_FOUND
+            # position id not found in DB
+            return {'message': f'Position {position_id} not found'}, HTTPStatus.NOT_FOUND
 
 
 class PositionsList(Resource):

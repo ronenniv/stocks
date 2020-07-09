@@ -21,7 +21,6 @@ app.secret_key = 'ronen'
 api = Api(app, catch_all_404s=True)
 
 # setting log configuration
-
 log_index = \
     {'DEBUG': logging.DEBUG,
      'INFO': logging.INFO,
