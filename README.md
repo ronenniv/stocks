@@ -11,3 +11,31 @@ REST API for updating stock details
 1. define DATABASE_URL. default is sqlite:///data.db
 
 2. define DEBUG_LEVEL. default is DEBUG
+
+## API documentation
+
+#### /stock/<string:symbol>
+Methhods: GET, POST, PUT, DEL<br>
+Arguments: stock symbol<br>
+Description: stock's operations
+
+#### /stocks
+Methods: GET<br>
+Arguments: None<br>
+Description: get list of all stocks
+
+#### /position/<string:symbol>
+Methods: GET, POST, DEL<br>
+Arguments: stock symbol<br>
+Description: positions operations
+
+#### /positions
+Methods: GET<br>
+Arguments: None<br>
+Description: get list of all positions
+
+
+#### /cash
+Methods: GET, POST, PUT<br>
+Arguments: None<br>
+Description: cash operations
