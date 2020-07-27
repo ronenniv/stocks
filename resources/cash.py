@@ -1,5 +1,3 @@
-from flask import current_app  # for debugging
-
 from flask_restful import Resource
 
 from http import HTTPStatus

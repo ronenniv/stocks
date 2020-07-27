@@ -1,4 +1,4 @@
-from flask import current_app  # for debugging
+import logging
 
 from flask_restful import Resource
 
@@ -14,7 +14,7 @@ class Position(Resource):
         GET request - no json required
         """
         symbol = symbol.upper()
-        current_app.logger.debug('func: get, symbol={}'.format(symbol))
+        logging.debug('func: get, symbol={}'.format(symbol))
 
         if positions_list := PositionsModel.find_by_symbol(symbol):
             # positions for symbol exist in DB

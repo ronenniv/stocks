@@ -2,8 +2,6 @@ from db import db
 
 from datetime import date
 
-from flask import current_app  # for debugging
-
 from flask_restful import reqparse
 
 import models.constants as const

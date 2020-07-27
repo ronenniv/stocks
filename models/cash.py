@@ -1,6 +1,6 @@
 from db import db
 
-from flask import current_app  # for debugging
+import logging
 
 from flask_restful import reqparse, abort
 
@@ -57,7 +57,7 @@ class CashModel(db.Model):  # extend db.Model for SQLAlechemy
         insert cash balance
         :return: True for success, False for failure
         """
-        current_app.logger.debug('func: save_details, self={}'.format(self))
+        logging.debug('func: save_details, self={}'.format(self))
         if self.query.first():
             # cash row already created. not to create more then one row
             return False
@@ -66,7 +66,7 @@ class CashModel(db.Model):  # extend db.Model for SQLAlechemy
             db.session.commit()
             return True
         except IntegrityError as e:  # unique constraint violation
-            current_app.logger.error(f'func: save_details, exception {e}, self: {self}')
+            logging.error(f'func: save_details, exception {e}, self: {self}')
             db.session.rollback()
             return False
 
@@ -80,16 +80,16 @@ class CashModel(db.Model):  # extend db.Model for SQLAlechemy
             self.id = cash.id
             self.query.filter_by(id=self.id).update(dict(balance=self.balance))
             db.session.commit()
-            current_app.logger.debug('func: update_details2.1, self={}'.format(CashModel.get_details()))
+            logging.debug('func: update_details2.1, self={}'.format(CashModel.get_details()))
             return True
         else:
             try:
                 db.session.add(self)
                 db.session.commit()
-                current_app.logger.debug('func: update_details4, self={}'.format(self))
+                logging.debug('func: update_details4, self={}'.format(self))
                 return True
             except IntegrityError as e:  # unique constraint violation
-                current_app.logger.error(f'func: update_details, exception {e}, self: {self}')
+                logging.error(f'func: update_details, exception {e}, self: {self}')
                 db.session.rollback()
                 return False
 
