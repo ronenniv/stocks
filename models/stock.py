@@ -193,19 +193,18 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
                                     params={'symbol': self.symbol, 'token': const.TOKEN},
                                     timeout=0.5
                                     )
-            logging.getLogger().debug(f'url={response.url}')
             response.raise_for_status()
         except requests.exceptions.ConnectTimeout as e:
-            logging.getLogger(__nam__).warning(f'func: get_current_price ConnectTimeout')
+            logging.warning(f'func: get_current_price ConnectTimeout')
             self.price = 'ERR'
         except Exception as e:
-            logging.getLogger(__name__).error(f'func: get_current_price Exception {e}')
+            logging.error(f'func: get_current_price Exception {e}')
             self.price = 'ERR'
         else:
             json_response = response.json()
             if 'error' in json_response:
                 # symbol not found
-                logging.getLogger(__name__).error(f'func: get_current_price, symbol {self.symbol} not found')
+                logging.error(f'func: get_current_price, symbol {self.symbol} not found')
                 self.price = 'ERR'
             else:
                 self.price = json_response['c']
