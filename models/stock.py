@@ -125,14 +125,14 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
             'unit_cost': self.unit_cost,
         }
 
-    def detailed_json(self, app=None) -> dict:
+    def detailed_json(self) -> dict:
         """
         create JSON for the stock details, stock price and stock's positions
         """
         positions_list = {'positions':
                               [position.json() for position in self.positions.all()]}
 
-        self.get_current_price(app)  # get the current stock price
+        self.get_current_price()  # get the current stock price
         return {
             'id': self.id,
             'symbol': self.symbol,
@@ -185,7 +185,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
             self.quantity = 0
         db.session.commit()
 
-    def get_current_price(self, app=None):
+    def get_current_price(self):
         """get current stock price from finnhub"""
         quote_api_url = const.FINNHUB_URL + "/quote"
         try:
