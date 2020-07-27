@@ -1,6 +1,5 @@
 import requests
 import requests.exceptions
-from flask import current_app  # for debugging
 from flask_restful import reqparse, abort
 from sqlalchemy.exc import IntegrityError
 import logging
@@ -154,7 +153,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
             return True
         except IntegrityError:
             # unique constraint violation - stock already exist
-            current_app.logger.debug(f'func: stock.save_details, exception: IntegrityError, self: {self}')
+            logging.info(f'func: stock.save_details, exception: IntegrityError, self: {self}')
             db.session.rollback()
             return False
 
@@ -168,7 +167,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
             return True
         except IntegrityError as e:
             db.session.rollback()
-            current_app.logger.error(f'func: update_symbol_and_desc, exception {e}, self: {self}')
+            logging.error(f'func: update_symbol_and_desc, exception {e}, self: {self}')
             return False
 
     def calc_unit_cost_and_quantity(self, unit_cost, quantity):
@@ -217,6 +216,6 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
             db.session.commit()
             return True
         except IntegrityError as e:  # unique constraint violation
-            current_app.logger.debug(f'func: del_stock, Exception {e}')
+            logging.warning(f'func: del_stock, Exception {e}')
             db.session.rollback()
             return False

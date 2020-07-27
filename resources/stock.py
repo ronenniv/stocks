@@ -1,10 +1,10 @@
-from flask import current_app  # for debugging
-
 from flask_restful import Resource
 
 from http import HTTPStatus
 
 from concurrent.futures import ThreadPoolExecutor
+
+import logging
 
 from models.stock import StockModel
 
@@ -70,7 +70,7 @@ class StockList(Resource):
     def get(self):
         # create list of all stocks
         stocks_list = StockModel.query.all()
-        current_app.logger.debug(f"StocksList.get, stocks_list={stocks_list}")
+        logging.debug(f"StocksList.get, stocks_list={stocks_list}")
         executor = ThreadPoolExecutor()
         # create json for each stock
         # to support thread need to provide current_app for debugging
