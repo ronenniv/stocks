@@ -4,6 +4,8 @@ from flask_restful import Resource
 
 from http import HTTPStatus
 
+from concurrent.futures import ThreadPoolExecutor
+
 from models.stock import StockModel
 
 
@@ -43,7 +45,7 @@ class Stock(Resource):
         if stock := StockModel.find_by_symbol(symbol):
             # stock is exist, then need to update symbol and desc
             return stock.json() if stock.update_symbol_and_desc(**stock_req) \
-                else ({'message': f'Error when saving stock {symbol}'}, HTTPStatus.BAD_REQUEST)
+                else ({'message': f'Error when updating stock {symbol}'}, HTTPStatus.BAD_REQUEST)
         else:
             # stock not found, then create new one
             stock = StockModel(**stock_req)
@@ -66,4 +68,11 @@ class Stock(Resource):
 class StockList(Resource):
 
     def get(self):
-        return {'stocks': [stock.detailed_json() for stock in StockModel.query.all()]}
+        # create list of all stocks
+        stocks_list = StockModel.query.all()
+        current_app.logger.debug(f"StocksList.get, stocks_list={stocks_list}")
+        executor = ThreadPoolExecutor()
+        # create json for each stock
+        # to support thread need to provide current_app for debugging
+        stocks_futures = [executor.submit(stock.detailed_json, current_app._get_current_object()) for stock in stocks_list]
+        return {'stocks': [stock.result() for stock in stocks_futures]}

@@ -1,14 +1,12 @@
-from db import db
-
+import requests
+import requests.exceptions
 from flask import current_app  # for debugging
-
 from flask_restful import reqparse, abort
-
 from sqlalchemy.exc import IntegrityError
-
-import requests, requests.exceptions
+import logging
 
 import models.constants as const
+from db import db
 
 
 class StockModel(db.Model):  # extend db.Model for SQLAlechemy
@@ -117,25 +115,33 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
 
     def json(self) -> dict:
         """
-        create JSON for the stock details
+        create JSON for the stock details. not include current price
         """
-        self.get_current_price()  # get the current stock price
         return {
             'id': self.id,
             'symbol': self.symbol,
             'desc': self.desc,
             'quantity': self.quantity,
             'unit_cost': self.unit_cost,
-            'price': self.price
         }
 
-    def detailed_json(self) -> dict:
+    def detailed_json(self, app=None) -> dict:
         """
-        create JSON for the stock details and stock's positions
+        create JSON for the stock details, stock price and stock's positions
         """
         positions_list = {'positions':
                               [position.json() for position in self.positions.all()]}
-        return {**self.json(), **positions_list}
+
+        self.get_current_price(app)  # get the current stock price
+        return {
+            'id': self.id,
+            'symbol': self.symbol,
+            'desc': self.desc,
+            'quantity': self.quantity,
+            'unit_cost': self.unit_cost,
+            'price': self.price,
+            **positions_list
+        }
 
     def save_details(self) -> bool:
         """
@@ -146,8 +152,9 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
             db.session.add(self)
             db.session.commit()
             return True
-        except IntegrityError:  # unique constraint violation
-            current_app.logger.error(f'func: save_details, exception: IntegrityError, self: {self}')
+        except IntegrityError:
+            # unique constraint violation - stock already exist
+            current_app.logger.debug(f'func: stock.save_details, exception: IntegrityError, self: {self}')
             db.session.rollback()
             return False
 
@@ -178,7 +185,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
             self.quantity = 0
         db.session.commit()
 
-    def get_current_price(self):
+    def get_current_price(self, app=None):
         """get current stock price from finnhub"""
         quote_api_url = const.FINNHUB_URL + "/quote"
         try:
@@ -186,13 +193,23 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
                                     params={'symbol': self.symbol, 'token': const.TOKEN},
                                     timeout=0.5
                                     )
-            current_app.logger.debug(f'url={response.url}')
+            logging.getLogger(__name__).debug('logged from thread')
+            if app:
+                app.logger.debug(f'url={response.url}')
+            else:
+                current_app.logger.debug(f'url={response.url}')
             response.raise_for_status()
         except requests.exceptions.ConnectTimeout as e:
-            current_app.logger.debug(f'func: get_current_price Exception {e}')
+            if app:
+                app.logger.debug(f'func: get_current_price ConnectTimeout')
+            else:
+                current_app.logger.error(f'func: get_current_price ConnectTimeout')
             self.price = 'ERR'
         except Exception as e:
-            current_app.logger.debug(f'func: get_current_price Exception {e}')
+            if app:
+                app.logger.debug(f'func: get_current_price Exception {e}')
+            else:
+                current_app.logger.error(f'func: get_current_price Exception {e}')
             self.price = 'ERR'
         else:
             json_response = response.json()
