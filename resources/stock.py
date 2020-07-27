@@ -68,6 +68,7 @@ class Stock(Resource):
 class StockList(Resource):
 
     def get(self):
+        '''
         # create list of all stocks
         stocks_list = StockModel.query.all()
         current_app.logger.debug(f"StocksList.get, stocks_list={stocks_list}")
@@ -75,4 +76,5 @@ class StockList(Resource):
         # create json for each stock
         # to support thread need to provide current_app for debugging
         stocks_futures = [executor.submit(stock.detailed_json, current_app._get_current_object()) for stock in stocks_list]
-        return {'stocks': [stock.result() for stock in stocks_futures]}
+        return {'stocks': [stock.result() for stock in stocks_futures]}'''
+        return {'stocks': [stock.detailed_json() for stock in StockModel.query.all()]}
