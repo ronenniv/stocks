@@ -16,9 +16,9 @@ app = Flask(__name__)
 # turning off the flask sqlalchmey sync tracker
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # getting url for PostgresDB in Heroku. default is sqlite3 if DATABASE_URL not defined
-#app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///data.db?check_same_thread=False')
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {"check_same_thread": False}
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///data.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///data.db?check_same_thread=False')
+#app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {"check_same_thread": False}
+#app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///data.db')
 app.secret_key = 'ronen'
 api = Api(app, catch_all_404s=True)
 
