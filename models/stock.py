@@ -196,7 +196,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
             logging.getLogger().debug(f'url={response.url}')
             response.raise_for_status()
         except requests.exceptions.ConnectTimeout as e:
-            logging.getLogger(__name__).warning(f'func: get_current_price ConnectTimeout')
+            logging.getLogger(__nam__).warning(f'func: get_current_price ConnectTimeout')
             self.price = 'ERR'
         except Exception as e:
             logging.getLogger(__name__).error(f'func: get_current_price Exception {e}')
