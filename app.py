@@ -16,8 +16,9 @@ app = Flask(__name__)
 # turning off the flask sqlalchmey sync tracker
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # getting url for PostgresDB in Heroku. default is sqlite3 if DATABASE_URL not defined
+# check_same_thread paramter for sqlite to support multi-threading
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///data.db?check_same_thread=False')
-#app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {"check_same_thread": False}
+
 
 app.secret_key = 'ronen'
 api = Api(app, catch_all_404s=True)
@@ -29,16 +30,14 @@ log_index = \
      'WARNING': logging.WARNING,
      'ERROR': logging.ERROR,
      'CRITICAL': logging.CRITICAL}
-try:
-    # setting default value to WARNING
-    logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
-                        datefmt='%m/%d/%Y %I:%M:%S',
-                        level=log_index[os.environ.get('DEBUG_LEVEL', 'WARNING')])
-except KeyError:
-    app.logger.error('Incorrect DEBUG_LEVEL %s. Setting WARNING level'.format(os.environ.get('DEBUG_LEVEL')))
-    logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
-                        datefmt='%m/%d/%Y %I:%M:%S',
-                        level=logging.WARNING)
+
+# setting default value to WARNING
+if (debug_level := os.environ.get('DEBUG_LEVEL', 'WARNING')) not in log_index:
+    debug_level = 'WARNING'
+logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S',
+                    level=log_index[debug_level])
+if debug_level == 'DEBUG':
+    app.config['SQLALCHEMY_ECHO'] = True  # send all sqlalchemy statements to log
 
 api.add_resource(Stock, '/stock/<string:symbol>')  # http://hostanme/stock/<symbol name>
 api.add_resource(StockList, '/stocks')  # http://hostanme/stocks
