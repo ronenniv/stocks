@@ -31,7 +31,7 @@ log_index = \
      'ERROR': logging.ERROR,
      'CRITICAL': logging.CRITICAL}
 
-# setting default value to WARNING
+# setting default value to WARNING if not defined or if defined incorrectly
 if (debug_level := os.environ.get('DEBUG_LEVEL', 'WARNING')) not in log_index:
     debug_level = 'WARNING'
 logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S',
