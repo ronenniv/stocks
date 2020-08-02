@@ -38,6 +38,13 @@ class PositionsModel(db.Model):  # extend db.Model for SQLAlechemy
     def __repr__(self):
         return str(self.json())
 
+    @staticmethod
+    def unit_cost_validation(value):
+        value = float(value)
+        if value != round(value, 2):
+            raise ValueError('Not a valid unit cost number')
+        return value
+
     @classmethod
     def parse_request_json(cls):
         """
@@ -58,10 +65,9 @@ class PositionsModel(db.Model):  # extend db.Model for SQLAlechemy
                             trim=True,
                             help='Quantity is missing or invalid')
         parser.add_argument(name=PositionsModel.JSON_UNIT_COST_STR,
-                            type=float,
+                            type=cls.unit_cost_validation,
                             required=True,
-                            trim=True,
-                            help='Unit cost is missing or invalid')
+                            trim=True)
         return parser.parse_args(strict=True)  # only the specific argument can be in the request
 
     @classmethod

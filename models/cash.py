@@ -26,6 +26,13 @@ class CashModel(db.Model):  # extend db.Model for SQLAlechemy
     def __repr__(self):
         return str(self.json())
 
+    @staticmethod
+    def balance_validation(value):
+        value = float(value)
+        if value != round(value, 2):
+            raise ValueError('Not a valid balance number')
+        return value
+
     @classmethod
     def parse_balance_from_json(cls):
         """
@@ -34,21 +41,16 @@ class CashModel(db.Model):  # extend db.Model for SQLAlechemy
         """
         parser = reqparse.RequestParser()
         parser.add_argument(name=CashModel.JSON_BALANCE_STR,
-                            type=float,
+                            type=cls.balance_validation,
                             required=True,
-                            trim=True,
-                            help='Balance amount is missing')
-        result = parser.parse_args(strict=True)  # only the one argument can be in the request
-        # validation on parse data
-        # TODO implement validations
-        return result[CashModel.JSON_BALANCE_STR]
+                            trim=True)
+        return parser.parse_args(strict=True)[cls.JSON_BALANCE_STR]  # return the balance from json
 
     def json(self) -> dict:
         """
         create JSON for the stock details
         """
         return {
-            'id': self.id,
             'balance': self.balance
         }
 
@@ -57,16 +59,12 @@ class CashModel(db.Model):  # extend db.Model for SQLAlechemy
         insert cash balance
         :return: True for success, False for failure
         """
-        logging.debug('func: save_details, self={}'.format(self))
-        if self.query.first():
-            # cash row already created. not to create more then one row
-            return False
         try:
             db.session.add(self)
             db.session.commit()
             return True
         except IntegrityError as e:  # unique constraint violation
-            logging.error(f'func: save_details, exception {e}, self: {self}')
+            logging.info(f'func: save_details, exception {e}, self: {self}')
             db.session.rollback()
             return False
 
@@ -75,22 +73,20 @@ class CashModel(db.Model):  # extend db.Model for SQLAlechemy
         update or insert cash balance
         :return: True for success, False for failure
         """
-        if cash := CashModel.get_details():
-            # cash row already created. update balance
-            self.id = cash.id
-            self.query.filter_by(id=self.id).update(dict(balance=self.balance))
+        # try to add balance. if exist then try to update
+        try:
+            db.session.add(self)
             db.session.commit()
-            logging.debug('func: update_details2.1, self={}'.format(CashModel.get_details()))
             return True
-        else:
+        except IntegrityError:
             try:
-                db.session.add(self)
-                db.session.commit()
-                logging.debug('func: update_details4, self={}'.format(self))
-                return True
-            except IntegrityError as e:  # unique constraint violation
-                logging.error(f'func: update_details, exception {e}, self: {self}')
                 db.session.rollback()
+                self.query.filter_by(id=self.id).update(dict(balance=self.balance))
+                db.session.commit()
+                return True
+            except Exception as e:
+                db.session.rollback()
+                logging.error(f'func: update_details, exception {e}, self: {self}')
                 return False
 
     @classmethod

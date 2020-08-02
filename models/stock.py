@@ -38,23 +38,22 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         return str(self.json())
 
     @staticmethod
-    def parse_validations(symbol=None, desc=None) -> dict:
-        """
-        return True if both fields are valid
-        can transfer only one value to validate
-        """
-        validation_flag = {}
-        if symbol:
-            if len(symbol) <= const.SYMBOL_MAX_LEN and symbol.isalpha() and symbol.isupper():
-                validation_flag['symbol'] = True
-            else:
-                validation_flag['symbol'] = False
-        if desc:
-            if len(desc) <= const.DESC_MAX_LEN and desc.isprintable():
-                validation_flag['desc'] = True
-            else:
-                validation_flag['desc'] = False
-        return validation_flag
+    def symbol_validation(value):
+        """ do validation on symbol received from request"""
+        value = str(value)
+        if len(value) <= const.SYMBOL_MAX_LEN and value.isalpha():
+            return value.upper()
+        else:
+            raise ValueError('Not a valid symbol')
+
+    @staticmethod
+    def desc_validation(value):
+        """ do validation on desc received from request"""
+        value = str(value)
+        if len(value) <= const.DESC_MAX_LEN and value.isprintable():
+            return value
+        else:
+            raise ValueError('Not a valid description')
 
     @classmethod
     def parse_request_json_with_symbol(cls):
@@ -64,25 +63,14 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         """
         parser = reqparse.RequestParser()
         parser.add_argument(name=StockModel.JSON_SYMBOL_STR,
-                            type=str.upper,
+                            type=cls.symbol_validation,
                             required=True,
-                            trim=True,
-                            help='Symbol is missing')
+                            trim=True)
         parser.add_argument(name=StockModel.JSON_DESC_STR,
-                            type=str,
+                            type=cls.desc_validation,
                             required=True,
-                            trim=True,
-                            help='Description is missing')
-        result = parser.parse_args(strict=False)
-
-        # validation on parse data
-        validation_result = cls.parse_validations(**result)
-        if not validation_result['symbol']:
-            abort(400, message='Symbol is incorrect')
-        elif not validation_result['desc']:
-            abort(400, message='Description is incorrect')
-
-        return result
+                            trim=True)
+        return parser.parse_args(strict=False)
 
     @classmethod
     def parse_request_json(cls):
@@ -92,16 +80,11 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         """
         parser = reqparse.RequestParser()
         parser.add_argument(name=StockModel.JSON_DESC_STR,
-                            type=str,
+                            type=cls.desc_validation(),
                             required=True,
                             trim=True,
                             help='Description is incorrect')
-        result = parser.parse_args(strict=False)
-        # validation on parse data
-        if not cls.parse_validations(desc=result[StockModel.JSON_DESC_STR])['desc']:
-            abort(400, message='Description incorrect')
-
-        return result
+        return parser.parse_args(strict=False)
 
     @classmethod
     def find_by_symbol(cls, symbol):

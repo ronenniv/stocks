@@ -19,10 +19,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # check_same_thread paramter for sqlite to support multi-threading
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///data.db?check_same_thread=False')
 
-
-app.secret_key = 'ronen'
-api = Api(app, catch_all_404s=True)
-
 # setting log configuration
 log_index = \
     {'DEBUG': logging.DEBUG,
@@ -38,6 +34,9 @@ logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s', datefmt='%m
                     level=log_index[debug_level])
 if debug_level == 'DEBUG':
     app.config['SQLALCHEMY_ECHO'] = True  # send all sqlalchemy statements to log
+
+app.secret_key = 'ronen'
+api = Api(app, catch_all_404s=True)  # handle 404 and return friendly message
 
 api.add_resource(Stock, '/stock/<string:symbol>')  # http://hostanme/stock/<symbol name>
 api.add_resource(StockList, '/stocks')  # http://hostanme/stocks
