@@ -2,14 +2,14 @@ from db import db
 
 import logging
 
-from flask_restful import reqparse, abort
+from flask_restful import reqparse
 
 from sqlalchemy.exc import IntegrityError
 
 import models.constants as const
 
 
-class CashModel(db.Model):  # extend db.Model for SQLAlechemy
+class CashModel(db.Model):  # extend db.Model for SQLAlchemy
 
     JSON_BALANCE_STR = 'balance'
 

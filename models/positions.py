@@ -4,11 +4,10 @@ from datetime import date
 
 from flask_restful import reqparse
 
-import models.constants as const
 from models.stock import StockModel
 
 
-class PositionsModel(db.Model):  # extend db.Model for SQLAlechemy
+class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
 
     JSON_SYMBOL_STR = 'symbol'
     JSON_DATE_STR = 'date'
@@ -150,4 +149,3 @@ class PositionsModel(db.Model):  # extend db.Model for SQLAlechemy
         else:
             # not match between position and the stock symbol
             return False
-

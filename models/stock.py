@@ -1,6 +1,6 @@
 import requests
 import requests.exceptions
-from flask_restful import reqparse, abort
+from flask_restful import reqparse
 from sqlalchemy.exc import IntegrityError
 import logging
 
@@ -8,7 +8,7 @@ import models.constants as const
 from db import db
 
 
-class StockModel(db.Model):  # extend db.Model for SQLAlechemy
+class StockModel(db.Model):  # extend db.Model for SQLAlchemy
 
     JSON_SYMBOL_STR = 'symbol'
     JSON_DESC_STR = 'desc'
@@ -41,19 +41,17 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
     def symbol_validation(value):
         """ do validation on symbol received from request"""
         value = str(value)
-        if len(value) <= const.SYMBOL_MAX_LEN and value.isalpha():
-            return value.upper()
-        else:
+        if len(value) > const.SYMBOL_MAX_LEN and not value.isalpha():
             raise ValueError('Not a valid symbol')
+        return value.upper()
 
     @staticmethod
     def desc_validation(value):
         """ do validation on desc received from request"""
         value = str(value)
-        if len(value) <= const.DESC_MAX_LEN and value.isprintable():
-            return value
-        else:
+        if len(value) > const.DESC_MAX_LEN and not value.isprintable():
             raise ValueError('Not a valid description')
+        return value
 
     @classmethod
     def parse_request_json_with_symbol(cls):
@@ -80,7 +78,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         """
         parser = reqparse.RequestParser()
         parser.add_argument(name=StockModel.JSON_DESC_STR,
-                            type=cls.desc_validation(),
+                            type=cls.desc_validation,
                             required=True,
                             trim=True,
                             help='Description is incorrect')
@@ -111,8 +109,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
         """
         create JSON for the stock details, stock price and stock's positions
         """
-        positions_list = {'positions':
-                              [position.json() for position in self.positions.all()]}
+        positions_list = {'positions': [position.json() for position in self.positions.all()]}
 
         self.get_current_price()  # get the current stock price
         return {
@@ -176,7 +173,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlechemy
                                     timeout=0.5
                                     )
             response.raise_for_status()
-        except requests.exceptions.ConnectTimeout as e:
+        except requests.exceptions.ConnectTimeout:
             logging.warning(f'func: get_current_price ConnectTimeout')
             self.price = 'ERR'
         except Exception as e:

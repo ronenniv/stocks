@@ -13,10 +13,10 @@ from resources.cash import Cash
 
 
 app = Flask(__name__)
-# turning off the flask sqlalchmey sync tracker
+# turning off the flask SQLAlchemy sync tracker
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # getting url for PostgresDB in Heroku. default is sqlite3 if DATABASE_URL not defined
-# check_same_thread paramter for sqlite to support multi-threading
+# check_same_thread parameter for sqlite to support multi-threading
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///data.db?check_same_thread=False')
 
 # setting log configuration
