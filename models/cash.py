@@ -11,7 +11,7 @@ import models.constants as const
 
 class CashModel(db.Model):  # extend db.Model for SQLAlchemy
 
-    JSON_BALANCE_STR = 'balance'
+    BALANCE_STR = 'balance'
 
     __tablename__ = 'cash'
 
@@ -51,7 +51,7 @@ class CashModel(db.Model):  # extend db.Model for SQLAlchemy
         create JSON for the stock details
         """
         return {
-            'balance': self.balance
+            self.BALANCE_STR: self.balance
         }
 
     def save_details(self) -> bool:

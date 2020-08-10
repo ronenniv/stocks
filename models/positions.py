@@ -9,11 +9,13 @@ from models.stock import StockModel
 
 class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
 
-    JSON_SYMBOL_STR = 'symbol'
-    JSON_DATE_STR = 'date'
-    JSON_QUANTITY_STR = 'quantity'
-    JSON_UNIT_COST_STR = 'unit_cost'
-    JSON_POSITION_ID_STR = 'position_id'
+    SYMBOL_STR = 'symbol'
+    QUANTITY_STR = 'quantity'
+    POSITION_DATE_STR = 'position_date'
+    UNIT_COST_STR = 'unit_cost'
+    CALC_FLAG_STR = 'calc_flag'
+    POSITION_ID_STR = 'position_id'
+    STOCK_ID_STR = 'stock_id'
 
     __tablename__ = 'positions'
 
@@ -53,17 +55,17 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
          "unit_cost": <unit_cost>}
         """
         parser = reqparse.RequestParser()
-        parser.add_argument(name=PositionsModel.JSON_DATE_STR,
+        parser.add_argument(name=PositionsModel.POSITION_DATE_STR,
                             type=lambda s: date.fromisoformat(s),
                             required=True,
                             trim=True,
                             help='Date is missing or invalid')
-        parser.add_argument(name=PositionsModel.JSON_QUANTITY_STR,
+        parser.add_argument(name=PositionsModel.QUANTITY_STR,
                             type=int,
                             required=True,
                             trim=True,
                             help='Quantity is missing or invalid')
-        parser.add_argument(name=PositionsModel.JSON_UNIT_COST_STR,
+        parser.add_argument(name=PositionsModel.UNIT_COST_STR,
                             type=cls.unit_cost_validation,
                             required=True,
                             trim=True)
@@ -76,7 +78,7 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
         {"position_id": <position_id>
         """
         parser = reqparse.RequestParser()
-        parser.add_argument(name=PositionsModel.JSON_POSITION_ID_STR,
+        parser.add_argument(name=PositionsModel.POSITION_ID_STR,
                             type=int,
                             required=True,
                             trim=True,
@@ -109,12 +111,12 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
         create JSON for the stock details
         """
         return {
-            'position_id': self.id,
-            'date': self.position_date.strftime('%Y-%m-%d'),
-            'quantity': self.quantity,
-            'unit_cost': self.unit_cost,
-            'calc_flag': self.calc_flag,
-            'stock_id': self.stock_id
+            self.POSITION_ID_STR: self.id,
+            self.POSITION_DATE_STR: self.position_date.strftime('%Y-%m-%d'),
+            self.QUANTITY_STR: self.quantity,
+            self.UNIT_COST_STR: self.unit_cost,
+            self.CALC_FLAG_STR: self.calc_flag,
+            self.STOCK_ID_STR: self.stock_id
         }
 
     def save_details(self) -> bool:

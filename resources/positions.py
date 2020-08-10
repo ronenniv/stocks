@@ -32,9 +32,9 @@ class Position(Resource):
         symbol = symbol.upper()
         position_args = PositionsModel.parse_request_json()
         position = PositionsModel(symbol,
-                                  position_args[PositionsModel.JSON_QUANTITY_STR],
-                                  position_args[PositionsModel.JSON_DATE_STR],
-                                  position_args[PositionsModel.JSON_UNIT_COST_STR])
+                                  position_args[PositionsModel.QUANTITY_STR],
+                                  position_args[PositionsModel.POSITION_DATE_STR],
+                                  position_args[PositionsModel.UNIT_COST_STR])
         if position.save_details():
             # position saved to DB
             return position.json(), HTTPStatus.CREATED
