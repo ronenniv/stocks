@@ -10,9 +10,14 @@ from db import db
 
 class StockModel(db.Model):  # extend db.Model for SQLAlchemy
 
-    JSON_SYMBOL_STR = 'symbol'
-    JSON_DESC_STR = 'desc'
-    JSON_UNIT_COST_STR = 'unit_cost'
+    ID_STR = 'id'
+    SYMBOL_STR = 'symbol'
+    DESC_STR = 'desc'
+    QUANTITY_STR = 'quantity'
+    UNIT_COST_STR = 'unit_cost'
+    STOP_QUOTE_STR = 'stop_quote'
+
+    PRICE_STR = 'price'
 
     __tablename__ = 'stock'
 
@@ -21,6 +26,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
     desc = db.Column(db.String(const.DESC_MAX_LEN))
     quantity = db.Column(db.Integer())
     unit_cost = db.Column(db.Float(precision=const.PRICE_PRECISION))
+    stop_quote = db.Column(db.Float(precision=const.PRICE_PRECISION))
 
     # this definition comes together with the definition in
     # PositionsModel. Lazy will ask to not create entries for positions
@@ -32,7 +38,36 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
         self.desc = desc
         self.quantity = 0
         self.unit_cost = 0
-        self.price = 0
+        self._price = 0
+        self.stop_quote = 0
+
+    def get_price(self):
+        """get current stock price from finnhub"""
+        quote_api_url = const.FINNHUB_URL + "/quote"
+        try:
+            response = requests.get(quote_api_url,
+                                    params={'symbol': self.symbol, 'token': const.TOKEN},
+                                    timeout=0.5
+                                    )
+            response.raise_for_status()
+        except requests.exceptions.ConnectTimeout:
+            logging.warning(f'func: get_current_price ConnectTimeout')
+            self._price = 'ERR'
+        except Exception as e:
+            logging.error(f'func: get_current_price Exception {e}')
+            self._price = 'ERR'
+        else:
+            json_response = response.json()
+            if 'error' in json_response:
+                # symbol not found
+                logging.error(f'func: get_current_price, symbol {self.symbol} not found')
+                self._price = 'ERR'
+            else:
+                self._price = json_response['c']
+        finally:
+            return self._price
+
+    price = property(fget=get_price, fset=None, fdel=None, doc="Get current price")
 
     def __repr__(self):
         return str(self.json())
@@ -60,11 +95,11 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
         :return parsed args as dict
         """
         parser = reqparse.RequestParser()
-        parser.add_argument(name=StockModel.JSON_SYMBOL_STR,
+        parser.add_argument(name=StockModel.SYMBOL_STR,
                             type=cls.symbol_validation,
                             required=True,
                             trim=True)
-        parser.add_argument(name=StockModel.JSON_DESC_STR,
+        parser.add_argument(name=StockModel.DESC_STR,
                             type=cls.desc_validation,
                             required=True,
                             trim=True)
@@ -77,7 +112,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
         :return parsed arg as dict
         """
         parser = reqparse.RequestParser()
-        parser.add_argument(name=StockModel.JSON_DESC_STR,
+        parser.add_argument(name=StockModel.DESC_STR,
                             type=cls.desc_validation,
                             required=True,
                             trim=True,
@@ -95,32 +130,31 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
 
     def json(self) -> dict:
         """
-        create JSON for the stock details. not include current price
+        create JSON for the stock details. not including current price
         """
-        return {
-            'id': self.id,
-            'symbol': self.symbol,
-            'desc': self.desc,
-            'quantity': self.quantity,
-            'unit_cost': self.unit_cost,
+        json_dict = {
+            self.ID_STR: self.id,
+            self.SYMBOL_STR: self.symbol,
+            self.DESC_STR: self.desc,
+            self.QUANTITY_STR: self.quantity,
+            self.UNIT_COST_STR: self.unit_cost
         }
+        if self.stop_quote:
+            json_dict[self.STOP_QUOTE_STR] = self.stop_quote
+        return json_dict
 
     def detailed_json(self) -> dict:
         """
-        create JSON for the stock details, stock price and stock's positions
+        create JSON for the stock details, current stock price and stock's positions
         """
+        json_dict = self.json()
+        # add the current price to json
+        json_dict[self.PRICE_STR] = self.price
+        # add the positions list to the json
         positions_list = {'positions': [position.json() for position in self.positions.all()]}
+        json_dict.update(positions_list)
 
-        self.get_current_price()  # get the current stock price
-        return {
-            'id': self.id,
-            'symbol': self.symbol,
-            'desc': self.desc,
-            'quantity': self.quantity,
-            'unit_cost': self.unit_cost,
-            'price': self.price,
-            **positions_list
-        }
+        return json_dict
 
     def save_details(self) -> bool:
         """
@@ -163,30 +197,6 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
             self.unit_cost = 0
             self.quantity = 0
         db.session.commit()
-
-    def get_current_price(self):
-        """get current stock price from finnhub"""
-        quote_api_url = const.FINNHUB_URL + "/quote"
-        try:
-            response = requests.get(quote_api_url,
-                                    params={'symbol': self.symbol, 'token': const.TOKEN},
-                                    timeout=0.5
-                                    )
-            response.raise_for_status()
-        except requests.exceptions.ConnectTimeout:
-            logging.warning(f'func: get_current_price ConnectTimeout')
-            self.price = 'ERR'
-        except Exception as e:
-            logging.error(f'func: get_current_price Exception {e}')
-            self.price = 'ERR'
-        else:
-            json_response = response.json()
-            if 'error' in json_response:
-                # symbol not found
-                logging.error(f'func: get_current_price, symbol {self.symbol} not found')
-                self.price = 'ERR'
-            else:
-                self.price = json_response['c']
 
     def del_stock(self) -> bool:
         """delete stock from DB

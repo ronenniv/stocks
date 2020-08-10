@@ -28,7 +28,7 @@ class Stock(Resource):
         {desc: description}
         """
         symbol = symbol.upper()
-        stock = StockModel(symbol, StockModel.parse_request_json()[StockModel.JSON_DESC_STR])
+        stock = StockModel(symbol, StockModel.parse_request_json()[StockModel.DESC_STR])
         if stock.save_details():
             # stock created in DB
             return stock.json(), HTTPStatus.CREATED
