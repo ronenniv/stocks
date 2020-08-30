@@ -11,7 +11,8 @@ MESSAGE = 'message'
 
 class Stock(Resource):
 
-    def get(self, symbol: str):
+    @classmethod
+    def get(cls, symbol: str):
         """
         GET request - no json required
         """
@@ -22,7 +23,8 @@ class Stock(Resource):
         else:
             return {MESSAGE: f'Stock {symbol} not found'}, HTTPStatus.NOT_FOUND
 
-    def post(self, symbol: str):
+    @classmethod
+    def post(cls, symbol: str):
         """
         POST request - json required
         {desc: description}
@@ -35,7 +37,8 @@ class Stock(Resource):
         else:
             return {MESSAGE: f'Stock {symbol} already exist'}, HTTPStatus.BAD_REQUEST
 
-    def put(self, symbol: str):
+    @classmethod
+    def put(cls, symbol: str):
         """
         PUT request - json required
         {symbol: symbol name, desc: description}
@@ -52,7 +55,8 @@ class Stock(Resource):
             return stock.json() if stock.save_details() \
                 else ({MESSAGE: f'Error when saving stock {symbol}'}, HTTPStatus.BAD_REQUEST)
 
-    def delete(self, symbol: str):
+    @classmethod
+    def delete(cls, symbol: str):
         """
         DEL request - no json required
         """
@@ -67,7 +71,8 @@ class Stock(Resource):
 
 class StockList(Resource):
 
-    def get(self):
+    @classmethod
+    def get(cls):
         # create list of all stocks
         stocks_list = StockModel.query.all()
         logging.debug(f"StocksList.get, stocks_list={stocks_list}")

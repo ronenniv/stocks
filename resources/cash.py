@@ -12,14 +12,16 @@ ERROR_UPDATE_BAL = 'Error in updating balance'
 
 class Cash(Resource):
 
-    def get(self):
+    @classmethod
+    def get(cls):
         """
         GET request - no json required
         """
         cash = CashModel.get_details()  # None if no cash in DB
         return cash.json() if cash else ({MESSAGE: CASH_NOT_FOUND}, HTTPStatus.BAD_REQUEST)
 
-    def post(self):
+    @classmethod
+    def post(cls):
         """
         POST request
         {balance: amount}
@@ -28,7 +30,8 @@ class Cash(Resource):
         cash.balance = cash.parse_balance_from_json()  # get balance from JSON
         return cash.json() if cash.save_details() else ({MESSAGE: ERROR_SAVE_BAL}, HTTPStatus.BAD_REQUEST)
 
-    def put(self):
+    @classmethod
+    def put(cls):
         """
         PUT request
         {balance: amount}

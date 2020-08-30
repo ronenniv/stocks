@@ -16,7 +16,8 @@ MESSAGE = 'message'
 
 class Position(Resource):
 
-    def get(self, symbol: str):
+    @classmethod
+    def get(cls, symbol: str):
         """
         GET request - no json required
         """
@@ -29,7 +30,8 @@ class Position(Resource):
         else:
             return {MESSAGE: f'Positions for symbol {symbol} not found'}, HTTPStatus.NOT_FOUND
 
-    def post(self, symbol: str):
+    @classmethod
+    def post(cls, symbol: str):
         """
         POST request - json required
         {date: YYYY-MM-DD,
@@ -50,7 +52,8 @@ class Position(Resource):
             return {MESSAGE: f'Position cannot be saved check if stock {symbol} exist'}
 
     '''
-    def put(self, symbol):
+    @classmethod
+    def put(cls, symbol):
         """
         PUT request - json required
         {date: symbol name, desc: description}
@@ -61,7 +64,8 @@ class Position(Resource):
         return stock.json()
     '''
 
-    def delete(self, symbol: str):
+    @classmethod
+    def delete(cls, symbol: str):
         """
         DEL request
         {position_id: int}
@@ -79,7 +83,8 @@ class Position(Resource):
 
 class PositionsList(Resource):
 
-    def get(self):
+    @classmethod
+    def get(cls):
         """
         GET request - no json required
         """

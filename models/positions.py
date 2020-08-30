@@ -52,8 +52,8 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
     def __repr__(self):
         return str(self.json())
 
-    @staticmethod
-    def unit_cost_validation(value: float) -> float:
+    @classmethod
+    def unit_cost_validation(cls, value: float) -> float:
         value = float(value)
         if value != round(value, 2):
             raise ValueError(NOT_VALID_COST)

@@ -27,8 +27,8 @@ class CashModel(db.Model):  # extend db.Model for SQLAlchemy
     def __repr__(self):
         return str(self.json())
 
-    @staticmethod
-    def balance_validation(value: float) -> float:
+    @classmethod
+    def balance_validation(cls, value: float) -> float:
         value = float(value)
         if value != round(value, 2):
             raise ValueError(NOT_VALID_BALANCE)

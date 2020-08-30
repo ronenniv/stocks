@@ -86,16 +86,16 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
     def __repr__(self) -> str:
         return str(self.json())
 
-    @staticmethod
-    def symbol_validation(value: str) -> str:
+    @classmethod
+    def symbol_validation(cls, value: str) -> str:
         """ do validation on symbol received from request"""
         value = str(value)
         if len(value) > SYMBOL_MAX_LEN and not value.isalpha():
             raise ValueError(NOT_VALID_SYMBOL)
         return value.upper()
 
-    @staticmethod
-    def desc_validation(value: str) -> str:
+    @classmethod
+    def desc_validation(cls, value: str) -> str:
         """ do validation on desc received from request"""
         value = str(value)
         if len(value) > DESC_MAX_LEN and not value.isprintable():
