@@ -7,10 +7,11 @@ from flask_restful import Resource
 from http import HTTPStatus
 
 from models.positions import PositionsModel
-
 from models.positions import PositionJSON
 
 PositionsListJSON = Dict[str, List[PositionJSON]]
+
+MESSAGE = 'message'
 
 
 class Position(Resource):
@@ -26,7 +27,7 @@ class Position(Resource):
             # positions for symbol exist in DB
             return [position.json() for position in positions_list]
         else:
-            return {'message': f'Positions for symbol {symbol} not found'}, HTTPStatus.NOT_FOUND
+            return {MESSAGE: f'Positions for symbol {symbol} not found'}, HTTPStatus.NOT_FOUND
 
     def post(self, symbol: str):
         """
@@ -46,7 +47,7 @@ class Position(Resource):
             return position.json(), HTTPStatus.CREATED
         else:
             # error with saving positions
-            return {'message': f'Position cannot be saved check if stock {symbol} exist'}
+            return {MESSAGE: f'Position cannot be saved check if stock {symbol} exist'}
 
     '''
     def put(self, symbol):
@@ -70,10 +71,10 @@ class Position(Resource):
         if position := PositionsModel.find_by_position_id(position_id):
             # position exist in DB
             return position.json() if position.del_position(symbol) \
-                       else {'message': f'Error when trying to delete position {position_id}'}, HTTPStatus.BAD_REQUEST
+                       else {MESSAGE: f'Error when trying to delete position {position_id}'}, HTTPStatus.BAD_REQUEST
         else:
             # position id not found in DB
-            return {'message': f'Position {position_id} not found'}, HTTPStatus.NOT_FOUND
+            return {MESSAGE: f'Position {position_id} not found'}, HTTPStatus.NOT_FOUND
 
 
 class PositionsList(Resource):

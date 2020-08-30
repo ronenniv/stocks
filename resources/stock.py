@@ -6,6 +6,8 @@ from flask_restful import Resource
 
 from models.stock import StockModel
 
+MESSAGE = 'message'
+
 
 class Stock(Resource):
 
@@ -18,7 +20,7 @@ class Stock(Resource):
             # stock exist in DB
             return stock.detailed_json()
         else:
-            return {'message': f'Stock {symbol} not found'}, HTTPStatus.NOT_FOUND
+            return {MESSAGE: f'Stock {symbol} not found'}, HTTPStatus.NOT_FOUND
 
     def post(self, symbol: str):
         """
@@ -31,7 +33,7 @@ class Stock(Resource):
             # stock created in DB
             return stock.json(), HTTPStatus.CREATED
         else:
-            return {'message': f'Stock {symbol} already exist'}, HTTPStatus.BAD_REQUEST
+            return {MESSAGE: f'Stock {symbol} already exist'}, HTTPStatus.BAD_REQUEST
 
     def put(self, symbol: str):
         """
@@ -43,12 +45,12 @@ class Stock(Resource):
         if stock := StockModel.find_by_symbol(symbol):
             # stock is exist, then need to update symbol and desc
             return stock.json() if stock.update_symbol_and_desc(**stock_req) \
-                else ({'message': f'Error when updating stock {symbol}'}, HTTPStatus.BAD_REQUEST)
+                else ({MESSAGE: f'Error when updating stock {symbol}'}, HTTPStatus.BAD_REQUEST)
         else:
             # stock not found, then create new one
             stock = StockModel(**stock_req)
             return stock.json() if stock.save_details() \
-                else ({'message': f'Error when saving stock {symbol}'}, HTTPStatus.BAD_REQUEST)
+                else ({MESSAGE: f'Error when saving stock {symbol}'}, HTTPStatus.BAD_REQUEST)
 
     def delete(self, symbol: str):
         """
@@ -58,9 +60,9 @@ class Stock(Resource):
         if stock := StockModel.find_by_symbol(symbol):
             # stock exist in DB
             return stock.detailed_json() if stock.del_stock() \
-                else ({'message': f'Error when trying to delete stock {symbol}'}, HTTPStatus.CONFLICT)
+                else ({MESSAGE: f'Error when trying to delete stock {symbol}'}, HTTPStatus.CONFLICT)
         else:
-            return {'message': 'Stock {} not found'.format(symbol)}, HTTPStatus.NOT_FOUND
+            return {MESSAGE: 'Stock {} not found'.format(symbol)}, HTTPStatus.NOT_FOUND
 
 
 class StockList(Resource):

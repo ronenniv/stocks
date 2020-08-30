@@ -6,30 +6,38 @@ from flask_restful import reqparse
 from sqlalchemy.exc import IntegrityError
 import logging
 
-import models.constants as const
 from db import db
 
 
 StockJSON = Dict[str, Union[int, str, float]]
 StockDetailedJSON = Dict[str, Union[int, str, float, List[StockJSON]]]
 
+NOT_VALID_SYMBOL = 'Not a valid symbol'
+NOT_VALID_DESC = 'Not a valid description'
+ID = 'id'
+SYMBOL = 'symbol'
+DESC = 'desc'
+QUANTITY = 'quantity'
+UNIT_COST = 'unit_cost'
+STOP_QUOTE = 'stop_quote'
+PRICE = 'price'
+ERR = 'ERR'
+# maximum length for string fields
+SYMBOL_MAX_LEN = 5  # maximum len of symbol string
+DESC_MAX_LEN = 30  # maximum len of description string
+
+# for stock price requests
+TOKEN = "bs2hfe7rh5rc90r58vqg"
+FINNHUB_URL = "https://finnhub.io/api/v1"
+
 
 class StockModel(db.Model):  # extend db.Model for SQLAlchemy
-
-    ID_STR = 'id'
-    SYMBOL_STR = 'symbol'
-    DESC_STR = 'desc'
-    QUANTITY_STR = 'quantity'
-    UNIT_COST_STR = 'unit_cost'
-    STOP_QUOTE_STR = 'stop_quote'
-
-    PRICE_STR = 'price'
 
     __tablename__ = 'stock'
 
     id = db.Column(db.Integer, primary_key=True)
-    symbol = db.Column(db.String(const.SYMBOL_MAX_LEN), unique=True)
-    desc = db.Column(db.String(const.DESC_MAX_LEN))
+    symbol = db.Column(db.String(SYMBOL_MAX_LEN), unique=True)
+    desc = db.Column(db.String(DESC_MAX_LEN))
     quantity = db.Column(db.Integer())
     unit_cost = db.Column(db.Float(precision=2))
     stop_quote = db.Column(db.Float(precision=2))
@@ -49,25 +57,25 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
 
     def get_price(self) -> float:
         """get current stock price from finnhub"""
-        quote_api_url = const.FINNHUB_URL + "/quote"
+        quote_api_url = FINNHUB_URL + "/quote"
         try:
             response = requests.get(quote_api_url,
-                                    params={'symbol': self.symbol, 'token': const.TOKEN},
+                                    params={'symbol': self.symbol, 'token': TOKEN},
                                     timeout=0.5
                                     )
             response.raise_for_status()
         except requests.exceptions.ConnectTimeout:
             logging.warning(f'func: get_current_price ConnectTimeout')
-            self._price = 'ERR'
+            self._price = ERR
         except Exception as e:
             logging.error(f'func: get_current_price Exception {e}')
-            self._price = 'ERR'
+            self._price = ERR
         else:
             json_response = response.json()
             if 'error' in json_response:
                 # symbol not found
                 logging.error(f'func: get_current_price, symbol {self.symbol} not found')
-                self._price = 'ERR'
+                self._price = ERR
             else:
                 self._price = json_response['c']
         finally:
@@ -82,16 +90,16 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
     def symbol_validation(value: str) -> str:
         """ do validation on symbol received from request"""
         value = str(value)
-        if len(value) > const.SYMBOL_MAX_LEN and not value.isalpha():
-            raise ValueError('Not a valid symbol')
+        if len(value) > SYMBOL_MAX_LEN and not value.isalpha():
+            raise ValueError(NOT_VALID_SYMBOL)
         return value.upper()
 
     @staticmethod
     def desc_validation(value: str) -> str:
         """ do validation on desc received from request"""
         value = str(value)
-        if len(value) > const.DESC_MAX_LEN and not value.isprintable():
-            raise ValueError('Not a valid description')
+        if len(value) > DESC_MAX_LEN and not value.isprintable():
+            raise ValueError(NOT_VALID_DESC)
         return value
 
     @classmethod
@@ -122,7 +130,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
                             type=cls.desc_validation,
                             required=True,
                             trim=True,
-                            help='Description is incorrect')
+                            help=NOT_VALID_DESC)
         return parser.parse_args(strict=False)
 
     @classmethod

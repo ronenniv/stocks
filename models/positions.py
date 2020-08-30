@@ -10,16 +10,18 @@ from models.stock import StockModel
 
 PositionJSON = Dict[str, Union[int, date, float]]
 
+NOT_VALID_COST = 'Not a valid unit cost number'
+PARAM_IS_MISSING = '{} is missing or invalid'
+SYMBOL = 'symbol'
+QUANTITY = 'quantity'
+POSITION_DATE = 'position_date'
+UNIT_COST = 'unit_cost'
+CALC_FLAG = 'calc_flag'
+POSITION_ID = 'position_id'
+STOCK_ID = 'stock_id'
+
 
 class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
-
-    SYMBOL_STR = 'symbol'
-    QUANTITY_STR = 'quantity'
-    POSITION_DATE_STR = 'position_date'
-    UNIT_COST_STR = 'unit_cost'
-    CALC_FLAG_STR = 'calc_flag'
-    POSITION_ID_STR = 'position_id'
-    STOCK_ID_STR = 'stock_id'
 
     __tablename__ = 'positions'
 
@@ -54,7 +56,7 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
     def unit_cost_validation(value: float) -> float:
         value = float(value)
         if value != round(value, 2):
-            raise ValueError('Not a valid unit cost number')
+            raise ValueError(NOT_VALID_COST)
         return value
 
     @classmethod
@@ -70,12 +72,12 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
                             type=lambda s: date.fromisoformat(s),
                             required=True,
                             trim=True,
-                            help='Date is missing or invalid')
+                            help=PARAM_IS_MISSING.format('Date'))
         parser.add_argument(name=PositionsModel.QUANTITY_STR,
                             type=int,
                             required=True,
                             trim=True,
-                            help='Quantity is missing or invalid')
+                            help=PARAM_IS_MISSING.format('Quantity'))
         parser.add_argument(name=PositionsModel.UNIT_COST_STR,
                             type=cls.unit_cost_validation,
                             required=True,
@@ -93,7 +95,7 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
                             type=int,
                             required=True,
                             trim=True,
-                            help='Position id is missing or invalid')
+                            help=PARAM_IS_MISSING.format('Position'))
         return parser.parse_args(strict=True)  # only the one argument can be in the request
 
     @classmethod

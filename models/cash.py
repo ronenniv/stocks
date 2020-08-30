@@ -8,10 +8,11 @@ from db import db
 
 BalanceJSON = Dict[str, float]
 
+NOT_VALID_BALANCE = 'Not a valid balance number'
+BALANCE = 'balance'
+
 
 class CashModel(db.Model):  # extend db.Model for SQLAlchemy
-
-    BALANCE_STR = 'balance'
 
     __tablename__ = 'cash'
 
@@ -30,7 +31,7 @@ class CashModel(db.Model):  # extend db.Model for SQLAlchemy
     def balance_validation(value: float) -> float:
         value = float(value)
         if value != round(value, 2):
-            raise ValueError('Not a valid balance number')
+            raise ValueError(NOT_VALID_BALANCE)
         return value
 
     @classmethod
@@ -51,7 +52,7 @@ class CashModel(db.Model):  # extend db.Model for SQLAlchemy
         create JSON for the stock details
         """
         return {
-            self.BALANCE_STR: self.balance
+            self.BALANCE: self.balance
         }
 
     def save_details(self) -> bool:
