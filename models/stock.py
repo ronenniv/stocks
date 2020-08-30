@@ -171,7 +171,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
             db.session.rollback()
             return False
 
-    def update_symbol_and_desc(self, symbol, desc):
+    def update_symbol_and_desc(self, symbol, desc) -> bool:
         """update existing stock symbol and desc
         :return True if success, False if error"""
         try:
@@ -206,6 +206,6 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
             db.session.commit()
             return True
         except IntegrityError as e:  # unique constraint violation
-            logging.warning(f'func: del_stock, Exception {e}')
             db.session.rollback()
+            logging.warning(f'func: del_stock, Exception {e}')
             return False
