@@ -1,17 +1,15 @@
-from flask_restful import Resource
-
+import logging
+from concurrent.futures import ThreadPoolExecutor
 from http import HTTPStatus
 
-from concurrent.futures import ThreadPoolExecutor
-
-import logging
+from flask_restful import Resource
 
 from models.stock import StockModel
 
 
 class Stock(Resource):
 
-    def get(self, symbol):
+    def get(self, symbol: str):
         """
         GET request - no json required
         """
@@ -22,7 +20,7 @@ class Stock(Resource):
         else:
             return {'message': f'Stock {symbol} not found'}, HTTPStatus.NOT_FOUND
 
-    def post(self, symbol):
+    def post(self, symbol: str):
         """
         POST request - json required
         {desc: description}
@@ -35,7 +33,7 @@ class Stock(Resource):
         else:
             return {'message': f'Stock {symbol} already exist'}, HTTPStatus.BAD_REQUEST
 
-    def put(self, symbol):
+    def put(self, symbol: str):
         """
         PUT request - json required
         {symbol: symbol name, desc: description}
@@ -52,7 +50,7 @@ class Stock(Resource):
             return stock.json() if stock.save_details() \
                 else ({'message': f'Error when saving stock {symbol}'}, HTTPStatus.BAD_REQUEST)
 
-    def delete(self, symbol):
+    def delete(self, symbol: str):
         """
         DEL request - no json required
         """

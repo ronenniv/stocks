@@ -3,14 +3,13 @@ import os
 
 from flask import Flask
 
-from flask_jwt import JWT
+# from flask_jwt import JWT
 
 from flask_restful import Api
 
 from resources.stock import Stock, StockList
 from resources.positions import Position, PositionsList
 from resources.cash import Cash
-
 
 app = Flask(__name__)
 # turning off the flask SQLAlchemy sync tracker

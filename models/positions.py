@@ -1,3 +1,5 @@
+from typing import List, Dict, Union
+
 from db import db
 
 from datetime import date
@@ -5,6 +7,8 @@ from datetime import date
 from flask_restful import reqparse
 
 from models.stock import StockModel
+
+PositionJSON = Dict[str, Union[int, date, float]]
 
 
 class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
@@ -22,12 +26,19 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
     id = db.Column(db.Integer, primary_key=True)
     quantity = db.Column(db.Integer)
     position_date = db.Column(db.Date)
-    unit_cost = db.Column(db.Float)
+    unit_cost = db.Column(db.Float(precision=2))
     # unit_cost = db.Column(db.Float(precision=const.PRICE_PRECISION))
     calc_flag = db.Column(db.Boolean)  # indicator for calc
     stock_id = db.Column(db.Integer, db.ForeignKey('stock.id'), nullable=False)  # foreign key to stock table
 
-    def __init__(self, symbol, quantity, position_date, unit_cost, calc_flag=False, stock_id=None, **kwargs):
+    def __init__(self,
+                 symbol: str,
+                 quantity: int,
+                 position_date: date,
+                 unit_cost: float,
+                 calc_flag: bool = False,
+                 stock_id: int = None,
+                 **kwargs):
         super().__init__(**kwargs)
         self.symbol = symbol
         self.quantity = quantity
@@ -40,7 +51,7 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
         return str(self.json())
 
     @staticmethod
-    def unit_cost_validation(value):
+    def unit_cost_validation(value: float) -> float:
         value = float(value)
         if value != round(value, 2):
             raise ValueError('Not a valid unit cost number')
@@ -86,10 +97,10 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
         return parser.parse_args(strict=True)  # only the one argument can be in the request
 
     @classmethod
-    def find_by_symbol(cls, symbol):
+    def find_by_symbol(cls, symbol: str) -> Union[List["PositionsModel"], None]:
         """
         find stock in DB according to symbol
-        if found, return list of positions for the stock, else None
+        :return if found, return list of positions for the stock, else None
         """
         if stock := StockModel.find_by_symbol(symbol):
             # if stock exist, get all positions according to stock id
@@ -99,14 +110,14 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
             return None
 
     @classmethod
-    def find_by_position_id(cls, position_id):
+    def find_by_position_id(cls, position_id: int) -> "PositionsModel":
         """
         find record in DB according to symbol
         if found, return object with stock details, otherwise None
         """
         return cls.query.get(position_id)  # SQLAlchemy -> SELECT * FROM position WHERE id=position_id
 
-    def json(self) -> dict:
+    def json(self) -> PositionJSON:
         """
         create JSON for the stock details
         """
@@ -136,7 +147,7 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
             # stock not found
             return False
 
-    def del_position(self, symbol) -> bool:
+    def del_position(self, symbol: str) -> bool:
         """
         delete stock from DB
         :return True for success, False for failure

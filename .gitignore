@@ -2,7 +2,4 @@ __pycache__/
 .*
 data.db*
 *.pyc
-venv/Lib
-venv/Include
-venv/Scripts/*.exe
-venv/Scripts/*.bat
+venv/

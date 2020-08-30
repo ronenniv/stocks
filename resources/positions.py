@@ -1,3 +1,5 @@
+from typing import Dict, List
+
 import logging
 
 from flask_restful import Resource
@@ -6,10 +8,14 @@ from http import HTTPStatus
 
 from models.positions import PositionsModel
 
+from models.positions import PositionJSON
+
+PositionsListJSON = Dict[str, List[PositionJSON]]
+
 
 class Position(Resource):
 
-    def get(self, symbol):
+    def get(self, symbol: str):
         """
         GET request - no json required
         """
@@ -22,7 +28,7 @@ class Position(Resource):
         else:
             return {'message': f'Positions for symbol {symbol} not found'}, HTTPStatus.NOT_FOUND
 
-    def post(self, symbol):
+    def post(self, symbol: str):
         """
         POST request - json required
         {date: YYYY-MM-DD,
@@ -54,7 +60,7 @@ class Position(Resource):
         return stock.json()
     '''
 
-    def delete(self, symbol):
+    def delete(self, symbol: str):
         """
         DEL request
         {position_id: int}

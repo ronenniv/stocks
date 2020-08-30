@@ -1,12 +1,12 @@
-from db import db
-
 import logging
+from typing import Dict
 
 from flask_restful import reqparse
-
 from sqlalchemy.exc import IntegrityError
 
-import models.constants as const
+from db import db
+
+BalanceJSON = Dict[str, float]
 
 
 class CashModel(db.Model):  # extend db.Model for SQLAlchemy
@@ -16,7 +16,7 @@ class CashModel(db.Model):  # extend db.Model for SQLAlchemy
     __tablename__ = 'cash'
 
     id = db.Column(db.Integer, primary_key=True)
-    balance = db.Column(db.Float(precision=const.PRICE_PRECISION), nullable=False)
+    balance = db.Column(db.Float(precision=2), nullable=False)
 
     def __init__(self, balance=0, **kwargs):
         super().__init__(**kwargs)
@@ -27,14 +27,14 @@ class CashModel(db.Model):  # extend db.Model for SQLAlchemy
         return str(self.json())
 
     @staticmethod
-    def balance_validation(value):
+    def balance_validation(value: float) -> float:
         value = float(value)
         if value != round(value, 2):
             raise ValueError('Not a valid balance number')
         return value
 
     @classmethod
-    def parse_balance_from_json(cls):
+    def parse_balance_from_json(cls) -> float:
         """
         parse desc from request
         :return balance from JSON
@@ -46,7 +46,7 @@ class CashModel(db.Model):  # extend db.Model for SQLAlchemy
                             trim=True)
         return parser.parse_args(strict=True)[cls.JSON_BALANCE_STR]  # return the balance from json
 
-    def json(self) -> dict:
+    def json(self) -> BalanceJSON:
         """
         create JSON for the stock details
         """
@@ -90,5 +90,5 @@ class CashModel(db.Model):  # extend db.Model for SQLAlchemy
                 return False
 
     @classmethod
-    def get_details(cls):
+    def get_details(cls) -> "CashModel":
         return cls.query.get(1)
