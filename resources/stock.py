@@ -7,6 +7,11 @@ from flask_restful import Resource
 from models.stock import StockModel, DESC
 
 MESSAGE = 'message'
+STOCK_EXIST = 'Stock {} already exist'
+STOCK_NOT_FOUND = 'Stock {} not found'
+ERROR_UPDATE_STOCK = 'Error when updating stock {}'
+ERROR_SAVE_STOCK = 'Error when saving stock {}'
+ERROR_DEL_STOCK = 'Error to delete stock {}'
 
 
 class Stock(Resource):
@@ -21,7 +26,7 @@ class Stock(Resource):
             # stock exist in DB
             return stock.detailed_json()
         else:
-            return {MESSAGE: f'Stock {symbol} not found'}, HTTPStatus.NOT_FOUND
+            return {MESSAGE: STOCK_NOT_FOUND.format(symbol)}, HTTPStatus.NOT_FOUND
 
     @classmethod
     def post(cls, symbol: str):
@@ -35,7 +40,7 @@ class Stock(Resource):
             # stock created in DB
             return stock.json(), HTTPStatus.CREATED
         else:
-            return {MESSAGE: f'Stock {symbol} already exist'}, HTTPStatus.BAD_REQUEST
+            return {MESSAGE: STOCK_EXIST.format(symbol)}, HTTPStatus.BAD_REQUEST
 
     @classmethod
     def put(cls, symbol: str):
@@ -48,12 +53,12 @@ class Stock(Resource):
         if stock := StockModel.find_by_symbol(symbol):
             # stock is exist, then need to update symbol and desc
             return stock.json() if stock.update_symbol_and_desc(**stock_req) \
-                else ({MESSAGE: f'Error when updating stock {symbol}'}, HTTPStatus.BAD_REQUEST)
+                else ({MESSAGE: ERROR_UPDATE_STOCK.format(symbol)}, HTTPStatus.BAD_REQUEST)
         else:
             # stock not found, then create new one
             stock = StockModel(**stock_req)
             return stock.json() if stock.save_details() \
-                else ({MESSAGE: f'Error when saving stock {symbol}'}, HTTPStatus.BAD_REQUEST)
+                else ({MESSAGE: ERROR_SAVE_STOCK.format(symbol)}, HTTPStatus.BAD_REQUEST)
 
     @classmethod
     def delete(cls, symbol: str):
@@ -64,9 +69,9 @@ class Stock(Resource):
         if stock := StockModel.find_by_symbol(symbol):
             # stock exist in DB
             return stock.detailed_json() if stock.del_stock() \
-                else ({MESSAGE: f'Error when trying to delete stock {symbol}'}, HTTPStatus.CONFLICT)
+                else ({MESSAGE: ERROR_DEL_STOCK.format(symbol)}, HTTPStatus.CONFLICT)
         else:
-            return {MESSAGE: 'Stock {} not found'.format(symbol)}, HTTPStatus.NOT_FOUND
+            return {MESSAGE: STOCK_NOT_FOUND.format(symbol)}, HTTPStatus.NOT_FOUND
 
 
 class StockList(Resource):

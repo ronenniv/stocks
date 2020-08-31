@@ -7,9 +7,6 @@ from flask_restful import Resource
 from http import HTTPStatus
 
 from models.positions import PositionsModel, QUANTITY, POSITION_DATE, UNIT_COST
-from models.positions import PositionJSON
-
-PositionsListJSON = Dict[str, List[PositionJSON]]
 
 MESSAGE = 'message'
 
