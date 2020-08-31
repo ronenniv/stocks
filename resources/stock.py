@@ -4,7 +4,7 @@ from http import HTTPStatus
 
 from flask_restful import Resource
 
-from models.stock import StockModel
+from models.stock import StockModel, DESC
 
 MESSAGE = 'message'
 
@@ -30,7 +30,7 @@ class Stock(Resource):
         {desc: description}
         """
         symbol = symbol.upper()
-        stock = StockModel(symbol, StockModel.parse_request_json()[StockModel.DESC_STR])
+        stock = StockModel(symbol, StockModel.parse_request_json()[DESC])
         if stock.save_details():
             # stock created in DB
             return stock.json(), HTTPStatus.CREATED

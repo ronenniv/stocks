@@ -109,14 +109,8 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
         :return parsed args as dict
         """
         parser = reqparse.RequestParser()
-        parser.add_argument(name=StockModel.SYMBOL_STR,
-                            type=cls.symbol_validation,
-                            required=True,
-                            trim=True)
-        parser.add_argument(name=StockModel.DESC_STR,
-                            type=cls.desc_validation,
-                            required=True,
-                            trim=True)
+        parser.add_argument(name=SYMBOL, type=cls.symbol_validation, required=True, trim=True)
+        parser.add_argument(name=DESC, type=cls.desc_validation, required=True, trim=True)
         return parser.parse_args(strict=False)
 
     @classmethod
@@ -126,11 +120,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
         :return parsed arg as dict
         """
         parser = reqparse.RequestParser()
-        parser.add_argument(name=StockModel.DESC_STR,
-                            type=cls.desc_validation,
-                            required=True,
-                            trim=True,
-                            help=NOT_VALID_DESC)
+        parser.add_argument(name=DESC, type=cls.desc_validation, required=True, trim=True,help=NOT_VALID_DESC)
         return parser.parse_args(strict=False)
 
     @classmethod
@@ -147,14 +137,14 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
         create JSON for the stock details. not including current price
         """
         json_dict = {
-            self.ID_STR: self.id,
-            self.SYMBOL_STR: self.symbol,
-            self.DESC_STR: self.desc,
-            self.QUANTITY_STR: self.quantity,
-            self.UNIT_COST_STR: self.unit_cost
+            ID: self.id,
+            SYMBOL: self.symbol,
+            DESC: self.desc,
+            QUANTITY: self.quantity,
+            UNIT_COST: self.unit_cost
         }
         if self.stop_quote:
-            json_dict[self.STOP_QUOTE_STR] = self.stop_quote
+            json_dict[STOP_QUOTE] = self.stop_quote
         return json_dict
 
     def detailed_json(self) -> StockDetailedJSON:
@@ -163,7 +153,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
         """
         json_dict = self.json()
         # add the current price to json
-        json_dict[self.PRICE_STR] = self.price
+        json_dict[PRICE] = self.price
         # add the positions list to the json
         positions_list = {'positions': [position.json() for position in self.positions.all()]}
         json_dict.update(positions_list)

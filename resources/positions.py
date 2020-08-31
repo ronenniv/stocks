@@ -6,7 +6,7 @@ from flask_restful import Resource
 
 from http import HTTPStatus
 
-from models.positions import PositionsModel
+from models.positions import PositionsModel, QUANTITY, POSITION_DATE, UNIT_COST
 from models.positions import PositionJSON
 
 PositionsListJSON = Dict[str, List[PositionJSON]]
@@ -41,9 +41,9 @@ class Position(Resource):
         symbol = symbol.upper()
         position_args = PositionsModel.parse_request_json()
         position = PositionsModel(symbol,
-                                  position_args[PositionsModel.QUANTITY_STR],
-                                  position_args[PositionsModel.POSITION_DATE_STR],
-                                  position_args[PositionsModel.UNIT_COST_STR])
+                                  position_args[QUANTITY],
+                                  position_args[POSITION_DATE],
+                                  position_args[UNIT_COST])
         if position.save_details():
             # position saved to DB
             return position.json(), HTTPStatus.CREATED

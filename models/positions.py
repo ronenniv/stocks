@@ -68,17 +68,17 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
          "unit_cost": <unit_cost>}
         """
         parser = reqparse.RequestParser()
-        parser.add_argument(name=PositionsModel.POSITION_DATE_STR,
+        parser.add_argument(name=POSITION_DATE,
                             type=lambda s: date.fromisoformat(s),
                             required=True,
                             trim=True,
                             help=PARAM_IS_MISSING.format('Date'))
-        parser.add_argument(name=PositionsModel.QUANTITY_STR,
+        parser.add_argument(name=QUANTITY,
                             type=int,
                             required=True,
                             trim=True,
                             help=PARAM_IS_MISSING.format('Quantity'))
-        parser.add_argument(name=PositionsModel.UNIT_COST_STR,
+        parser.add_argument(name=UNIT_COST,
                             type=cls.unit_cost_validation,
                             required=True,
                             trim=True)
@@ -91,7 +91,7 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
         {"position_id": <position_id>
         """
         parser = reqparse.RequestParser()
-        parser.add_argument(name=PositionsModel.POSITION_ID_STR,
+        parser.add_argument(name=POSITION_ID,
                             type=int,
                             required=True,
                             trim=True,
@@ -124,12 +124,12 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
         create JSON for the stock details
         """
         return {
-            self.POSITION_ID_STR: self.id,
-            self.POSITION_DATE_STR: self.position_date.strftime('%Y-%m-%d'),
-            self.QUANTITY_STR: self.quantity,
-            self.UNIT_COST_STR: self.unit_cost,
-            self.CALC_FLAG_STR: self.calc_flag,
-            self.STOCK_ID_STR: self.stock_id
+            POSITION_ID: self.id,
+            POSITION_DATE: self.position_date.strftime('%Y-%m-%d'),
+            QUANTITY: self.quantity,
+            UNIT_COST: self.unit_cost,
+            CALC_FLAG: self.calc_flag,
+            STOCK_ID: self.stock_id
         }
 
     def save_details(self) -> bool:

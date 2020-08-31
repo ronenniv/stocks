@@ -19,7 +19,7 @@ class CashModel(db.Model):  # extend db.Model for SQLAlchemy
     id = db.Column(db.Integer, primary_key=True)
     balance = db.Column(db.Float(precision=2), nullable=False)
 
-    def __init__(self, balance=0, **kwargs):
+    def __init__(self, balance: float = 0, **kwargs):
         super().__init__(**kwargs)
         self.id = 1  # only the first row
         self.balance = balance
@@ -41,18 +41,18 @@ class CashModel(db.Model):  # extend db.Model for SQLAlchemy
         :return balance from JSON
         """
         parser = reqparse.RequestParser()
-        parser.add_argument(name=CashModel.JSON_BALANCE_STR,
+        parser.add_argument(name=BALANCE,
                             type=cls.balance_validation,
                             required=True,
                             trim=True)
-        return parser.parse_args(strict=True)[cls.JSON_BALANCE_STR]  # return the balance from json
+        return parser.parse_args(strict=True)[BALANCE]  # return the balance from json
 
     def json(self) -> BalanceJSON:
         """
         create JSON for the stock details
         """
         return {
-            self.BALANCE: self.balance
+            BALANCE: self.balance
         }
 
     def save_details(self) -> bool:
