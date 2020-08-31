@@ -1,7 +1,6 @@
 import logging
 from typing import Dict
 
-from flask_restful import reqparse
 from sqlalchemy.exc import IntegrityError
 
 from db import db
@@ -19,13 +18,14 @@ class CashModel(db.Model):  # extend db.Model for SQLAlchemy
     id = db.Column(db.Integer, primary_key=True)
     balance = db.Column(db.Float(precision=2), nullable=False)
 
+    '''
     def __init__(self, balance: float = 0, **kwargs):
         super().__init__(**kwargs)
         self.id = 1  # only the first row
-        self.balance = balance
+        self.balance = balance'''
 
     def __repr__(self):
-        return str(self.json())
+        return f'id={self.id}, balance={self.balance}'
 
     @classmethod
     def balance_validation(cls, value: float) -> float:
@@ -33,27 +33,6 @@ class CashModel(db.Model):  # extend db.Model for SQLAlchemy
         if value != round(value, 2):
             raise ValueError(NOT_VALID_BALANCE)
         return value
-
-    @classmethod
-    def parse_balance_from_json(cls) -> float:
-        """
-        parse desc from request
-        :return balance from JSON
-        """
-        parser = reqparse.RequestParser()
-        parser.add_argument(name=BALANCE,
-                            type=cls.balance_validation,
-                            required=True,
-                            trim=True)
-        return parser.parse_args(strict=True)[BALANCE]  # return the balance from json
-
-    def json(self) -> BalanceJSON:
-        """
-        create JSON for the stock details
-        """
-        return {
-            BALANCE: self.balance
-        }
 
     def save_details(self) -> bool:
         """
@@ -93,3 +72,14 @@ class CashModel(db.Model):  # extend db.Model for SQLAlchemy
     @classmethod
     def get_details(cls) -> "CashModel":
         return cls.query.get(1)
+
+    @classmethod
+    def del_balance(cls) -> bool:
+        """:return True for delete, False for not found"""
+        cash = cls.get_details()
+        if cash:
+            db.session.delete(cls.get_details())
+            db.session.commit()
+            return True
+        return False
+
