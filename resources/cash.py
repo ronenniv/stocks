@@ -51,4 +51,4 @@ class Cash(Resource):
     @classmethod
     def delete(cls):
         """DEL request"""
-        return ({MESSAGE: CASH_DEL}, HTTPStatus.OK) if CashModel.del_balance() else ({MESSAGE: ERROR_CASH_DEL}, HTTPStatus.BAD_REQUEST)
+        return {MESSAGE: CASH_DEL} if CashModel.del_balance() else ({MESSAGE: ERROR_CASH_DEL}, HTTPStatus.BAD_REQUEST)

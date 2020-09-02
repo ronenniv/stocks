@@ -18,12 +18,6 @@ class CashModel(db.Model):  # extend db.Model for SQLAlchemy
     id = db.Column(db.Integer, primary_key=True)
     balance = db.Column(db.Float(precision=2), nullable=False)
 
-    '''
-    def __init__(self, balance: float = 0, **kwargs):
-        super().__init__(**kwargs)
-        self.id = 1  # only the first row
-        self.balance = balance'''
-
     def __repr__(self):
         return f'id={self.id}, balance={self.balance}'
 

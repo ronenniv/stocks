@@ -2,7 +2,6 @@ from typing import List, Dict, Union
 
 import requests
 import requests.exceptions
-from flask_restful import reqparse
 from sqlalchemy.exc import IntegrityError
 import logging
 
@@ -36,8 +35,8 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
     __tablename__ = 'stock'
 
     id = db.Column(db.Integer, primary_key=True)
-    symbol = db.Column(db.String(SYMBOL_MAX_LEN), unique=True)
-    desc = db.Column(db.String(DESC_MAX_LEN))
+    symbol = db.Column(db.String(SYMBOL_MAX_LEN), nullable=False, unique=True)
+    desc = db.Column(db.String(DESC_MAX_LEN), nullable=False)
     quantity = db.Column(db.Integer())
     unit_cost = db.Column(db.Float(precision=2))
     stop_quote = db.Column(db.Float(precision=2))
@@ -45,15 +44,6 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
     # this definition comes together with the definition in
     # PositionsModel. Lazy will ask to not create entries for positions
     positions = db.relationship('PositionsModel', lazy='dynamic', backref='stock', cascade='all')
-
-    def __init__(self, symbol: str, desc: str, **kwargs):
-        super().__init__(**kwargs)
-        self.symbol = symbol
-        self.desc = desc
-        self.quantity = 0
-        self.unit_cost = 0
-        self._price = 0
-        self.stop_quote = 0
 
     def get_price(self) -> float:
         """get current stock price from finnhub"""
@@ -84,44 +74,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
     price = property(fget=get_price, fset=None, fdel=None, doc="Get current price")
 
     def __repr__(self) -> str:
-        return str(self.json())
-
-    @classmethod
-    def symbol_validation(cls, value: str) -> str:
-        """ do validation on symbol received from request"""
-        value = str(value)
-        if len(value) > SYMBOL_MAX_LEN and not value.isalpha():
-            raise ValueError(NOT_VALID_SYMBOL)
-        return value.upper()
-
-    @classmethod
-    def desc_validation(cls, value: str) -> str:
-        """ do validation on desc received from request"""
-        value = str(value)
-        if len(value) > DESC_MAX_LEN and not value.isprintable():
-            raise ValueError(NOT_VALID_DESC)
-        return value
-
-    @classmethod
-    def parse_request_json_with_symbol(cls):
-        """
-        parse symbol and description from request
-        :return parsed args as dict
-        """
-        parser = reqparse.RequestParser()
-        parser.add_argument(name=SYMBOL, type=cls.symbol_validation, required=True, trim=True)
-        parser.add_argument(name=DESC, type=cls.desc_validation, required=True, trim=True)
-        return parser.parse_args(strict=False)
-
-    @classmethod
-    def parse_request_json(cls):
-        """
-        parse desc from request
-        :return parsed arg as dict
-        """
-        parser = reqparse.RequestParser()
-        parser.add_argument(name=DESC, type=cls.desc_validation, required=True, trim=True,help=NOT_VALID_DESC)
-        return parser.parse_args(strict=False)
+        return f'id={self.id}, symbol={self.symbol}, desc={self.desc}, quantity={self.quantity}, unit_cost={self.unit_cost}, stop_quote={self.stop_quote} '
 
     @classmethod
     def find_by_symbol(cls, symbol: str) -> "StockModel":
@@ -132,7 +85,16 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
         # SELECT * FROM stock WHERE symbol=symbol
         return cls.query.filter_by(symbol=symbol).first()
 
-    def json(self) -> StockJSON:
+    @classmethod
+    def find_by_stock_id(cls, stock_id: int) -> "StockModel":
+        """
+        find record in DB according to stock_id
+        if found, return object with stock details, otherwise None
+        """
+        # SELECT * FROM stock WHERE symbol=symbol
+        return cls.query.filter_by(stock_id=stock_id).first()
+
+    def _json(self) -> StockJSON:
         """
         create JSON for the stock details. not including current price
         """
@@ -147,7 +109,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
             json_dict[STOP_QUOTE] = self.stop_quote
         return json_dict
 
-    def detailed_json(self) -> StockDetailedJSON:
+    def _detailed_json(self) -> StockDetailedJSON:
         """
         create JSON for the stock details, current stock price and stock's positions
         """
@@ -157,8 +119,18 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
         # add the positions list to the json
         positions_list = {'positions': [position.json() for position in self.positions.all()]}
         json_dict.update(positions_list)
-
         return json_dict
+
+    def _detailed_stock(self) -> StockDetailedJSON:
+        """
+        create JSON for the stock details, current stock price and stock's positions
+        """
+        stock_json = stock_schema.dump(self)
+        # add the current price to json
+        stock_json[PRICE] = self.price
+        # add the positions list to the json
+        positions_list = self.positions.all()
+        stock_json.update(positions_list)
 
     def save_details(self) -> bool:
         """
@@ -188,7 +160,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
             logging.error(f'func: update_symbol_and_desc, exception {e}, self: {self}')
             return False
 
-    def calc_unit_cost_and_quantity(self, unit_cost: float, quantity: int):
+    def calc_unit_cost_and_quantity(self, unit_cost: float, quantity: int, commit_flag: bool):
         """calculate the unit cost and the quantity according to the position
         positive quantity for adding, negative quantity for removing"""
         try:
@@ -199,7 +171,8 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
             # all positions are sold -> quantity is zero
             self.unit_cost = 0
             self.quantity = 0
-        db.session.commit()
+        if commit_flag:
+            db.session.commit()
 
     def del_stock(self) -> bool:
         """delete stock from DB

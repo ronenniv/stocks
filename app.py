@@ -8,7 +8,7 @@ from flask import Flask
 from flask_restful import Api
 
 from resources.stock import Stock, StockList
-from resources.positions import Position, PositionsList
+from resources.positions import Position, PositionsList, PositionID
 from resources.cash import Cash
 
 app = Flask(__name__)
@@ -40,6 +40,7 @@ api = Api(app, catch_all_404s=True)  # handle 404 and return friendly message
 api.add_resource(Stock, '/stock/<string:symbol>')  # http://hostanme/stock/<symbol name>
 api.add_resource(StockList, '/stocks')  # http://hostanme/stocks
 api.add_resource(Position, '/position/<string:symbol>')  # http://hostanme/position/<symbol name>
+api.add_resource(PositionID, '/position/<int:position_id>')  # http://hostanme/position/<number id>
 api.add_resource(PositionsList, '/positions')  # http://hostanme/positions
 api.add_resource(Cash, '/cash')  # http://hostanme/cash
 
