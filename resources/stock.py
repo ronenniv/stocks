@@ -44,7 +44,7 @@ class Stock(Resource):
         stock_json = request.get_json()
 
         new_stock = stock_schema.load(stock_json, partial=(SYMBOL, ))
-        new_stock['symbol'] = symbol
+        new_stock[SYMBOL] = symbol
         stock = StockModel(**new_stock)
 
         if stock.save_details():
@@ -93,7 +93,7 @@ class StockList(Resource):
     def get(cls):
         # create list of all stocks
         stocks_list = StockModel.query.all()
-        logging.debug(f"StocksList.get, stocks_list={stocks_list}")
+        logging.debug(f"StocksList.get, {stocks_list=}")
         executor = ThreadPoolExecutor()
         # create json for each stock
         # to support thread need to provide current_app for debugging

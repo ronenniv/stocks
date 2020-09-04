@@ -24,7 +24,7 @@ class PositionSchema(ma.SQLAlchemySchema):
     def get_envelope_key(self, many):
         """Helper to get the envelope key."""
         key = self.__envelope__["many"] if many else self.__envelope__["single"]
-        assert key is not None, "Envelope key undefined"
+        #assert key is not None, "Envelope key undefined"
         return key
 
     @post_dump(pass_many=True)

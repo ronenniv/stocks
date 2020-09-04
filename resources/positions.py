@@ -20,7 +20,7 @@ class Position(Resource):
         GET request - no json required
         """
         symbol = symbol.upper()
-        logging.debug('func: get, symbol={}'.format(symbol))
+        logging.debug(f'func: get, {symbol=}')
 
         if positions_list := PositionsModel.find_by_symbol(symbol):
             # positions for symbol exist in DB

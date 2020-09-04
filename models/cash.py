@@ -14,7 +14,7 @@ class CashModel(db.Model):  # extend db.Model for SQLAlchemy
     balance = db.Column(db.Float(precision=2), nullable=False)
 
     def __repr__(self):
-        return f'id={self.id}, balance={self.balance}'
+        return f'{self.id=}, {self.balance=}'
 
     @classmethod
     def balance_validation(cls, value: float) -> float:
@@ -33,7 +33,7 @@ class CashModel(db.Model):  # extend db.Model for SQLAlchemy
             db.session.commit()
             return True
         except IntegrityError as e:  # unique constraint violation
-            logging.info(f'func: save_details, exception {e}, self: {self}')
+            logging.info(f'func: save_details, exception {e}, {self=}')
             db.session.rollback()
             return False
 
@@ -55,7 +55,7 @@ class CashModel(db.Model):  # extend db.Model for SQLAlchemy
                 return True
             except Exception as e:
                 db.session.rollback()
-                logging.error(f'func: update_details, exception {e}, self: {self}')
+                logging.error(f'func: update_details, exception {e}, {self=}')
                 return False
 
     @classmethod

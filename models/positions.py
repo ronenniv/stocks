@@ -16,7 +16,7 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
     stock_id = db.Column(db.Integer, db.ForeignKey('stock.id'), nullable=False)  # foreign key to stock table
 
     def __repr__(self):
-        return f'id={self.id}, quantity={self.quantity}, position_date={self.position_date}, unit_cost={self.unit_cost}, stock_id={self.stock_id} '
+        return f'{self.id=}, {self.quantity=}, {self.position_date=}, {self.unit_cost=}, {self.stock_id=}'
 
     @classmethod
     def find_by_symbol(cls, symbol: str) -> Union[List["PositionsModel"], None]:
@@ -54,7 +54,7 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
                 return True
             except:
                 db.session.rollback()
-                logging.error(f'failed to save details self={self}, symbol={symbol}')
+                logging.error(f'failed to save details {self=}, {symbol=}')
                 return False
         else:
             # stock not found
@@ -74,5 +74,5 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
             return True
         except:
             db.session.rollback()
-            logging.error(f'error in del position {self}')
+            logging.error(f'error in del position {self=}')
             return False

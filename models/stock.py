@@ -63,7 +63,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
     price = property(fget=get_price, fset=None, fdel=None, doc="Get current price")
 
     def __repr__(self) -> str:
-        return f'id={self.id}, symbol={self.symbol}, desc={self.desc}, quantity={self.quantity}, unit_cost={self.unit_cost}, stop_quote={self.stop_quote}'
+        return f'{self.id=}, {self.symbol=}, {self.desc=}, {self.quantity=}, {self.unit_cost=}, {self.stop_quote=}'
 
     @classmethod
     def find_by_symbol(cls, symbol: str) -> "StockModel":
@@ -94,7 +94,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
             return True
         except IntegrityError:
             # unique constraint violation - stock already exist
-            logging.info(f'func: stock.save_details, exception: IntegrityError, self: {self}')
+            logging.info(f'func: stock.save_details, exception: IntegrityError, {self=}')
             db.session.rollback()
             return False
 
@@ -108,7 +108,7 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
             return True
         except IntegrityError as e:
             db.session.rollback()
-            logging.error(f'func: update_symbol_and_desc, exception {e}, self: {self}')
+            logging.error(f'func: update_symbol_and_desc, exception {e}, {self=}')
             return False
 
     def calc_unit_cost_and_quantity(self, unit_cost: float, quantity: int, commit_flag: bool):
