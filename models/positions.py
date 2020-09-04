@@ -1,26 +1,8 @@
-from typing import List, Dict, Union
+import logging
+from typing import List, Union
 
 from db import db
-
-from datetime import date
-
-import logging
-
 from models.stock import StockModel
-
-# from schemas.positions import PositionSchema
-
-PositionJSON = Dict[str, Union[int, date, float]]
-
-NOT_VALID_COST = 'Not a valid unit cost number'
-PARAM_IS_MISSING = '{} is missing or invalid'
-SYMBOL = 'symbol'
-QUANTITY = 'quantity'
-POSITION_DATE = 'position_date'
-UNIT_COST = 'unit_cost'
-CALC_FLAG = 'calc_flag'
-POSITION_ID = 'position_id'
-STOCK_ID = 'stock_id'
 
 
 class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
@@ -34,10 +16,10 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
     stock_id = db.Column(db.Integer, db.ForeignKey('stock.id'), nullable=False)  # foreign key to stock table
 
     def __repr__(self):
-        return f'id={self.id}, quantity={self.quantity}, position_date={self.position_date}, unit_cost={self.unit_cost}, stock_id={self.stock_id}'
+        return f'id={self.id}, quantity={self.quantity}, position_date={self.position_date}, unit_cost={self.unit_cost}, stock_id={self.stock_id} '
 
     @classmethod
-    def find_by_symbol(cls, symbol: str) -> List["PositionsModel"]:
+    def find_by_symbol(cls, symbol: str) -> Union[List["PositionsModel"], None]:
         """
         find all positions for stock according to symbol
         :return if found, return list of positions for the stock, else None
@@ -78,7 +60,7 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
             # stock not found
             return False
 
-    def del_position(self, symbol: str) -> bool:
+    def del_position(self) -> bool:
         """
         delete stock from DB
         :return True for success, False for failure
@@ -94,4 +76,3 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
             db.session.rollback()
             logging.error(f'error in del position {self}')
             return False
-

@@ -1,17 +1,11 @@
-from flask_restful import Resource
-from flask import request
-
 from http import HTTPStatus
 
+from flask import request
+from flask_restful import Resource
+
+from globals.constants import *
 from models.cash import CashModel
 from schemas.cash import CashSchema
-
-MESSAGE = 'message'
-CASH_NOT_FOUND = 'Cash balance not found'
-ERROR_SAVE_BAL = 'Error in saving balance'
-ERROR_UPDATE_BAL = 'Error in updating balance'
-CASH_DEL = 'Cash balance deleted'
-ERROR_CASH_DEL = 'Error deleting balance'
 
 cash_schema = CashSchema()
 

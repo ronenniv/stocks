@@ -1,14 +1,9 @@
 import logging
-from typing import Dict
 
 from sqlalchemy.exc import IntegrityError
 
 from db import db
-
-BalanceJSON = Dict[str, float]
-
-NOT_VALID_BALANCE = 'Not a valid balance number'
-BALANCE = 'balance'
+from globals.constants import *
 
 
 class CashModel(db.Model):  # extend db.Model for SQLAlchemy

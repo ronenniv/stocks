@@ -14,8 +14,8 @@ REST API for updating stock details
 
 ## API documentation
 
-#### /stock/<string:symbol>
-Methhods: GET, POST, PUT, DEL<br>
+#### /stock/<<string:symbol>>
+Methods: GET, POST, PUT, DEL<br>
 Arguments: stock symbol<br>
 Description: stock's operations
 
@@ -24,16 +24,20 @@ Methods: GET<br>
 Arguments: None<br>
 Description: get list of all stocks
 
-#### /position/<string:symbol>
-Methods: GET, POST, DEL<br>
+#### /position/<<string:symbol>>
+Methods: GET, POST<br>
 Arguments: stock symbol<br>
 Description: positions operations
+
+#### /position/<<int:symbol>>
+Methods: DEL
+Arguments: None<br>
+Description: delete position id
 
 #### /positions
 Methods: GET<br>
 Arguments: None<br>
 Description: get list of all positions
-
 
 #### /cash
 Methods: GET, POST, PUT<br>

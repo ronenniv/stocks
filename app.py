@@ -2,14 +2,15 @@ import logging
 import os
 
 from flask import Flask
+from flask import jsonify
+from flask_restful import Api
+from marshmallow import ValidationError
+
+from resources.cash import Cash
+from resources.positions import Position, PositionsList, PositionID
+from resources.stock import Stock, StockList
 
 # from flask_jwt import JWT
-
-from flask_restful import Api
-
-from resources.stock import Stock, StockList
-from resources.positions import Position, PositionsList, PositionID
-from resources.cash import Cash
 
 app = Flask(__name__)
 # turning off the flask SQLAlchemy sync tracker
@@ -43,6 +44,13 @@ api.add_resource(Position, '/position/<string:symbol>')  # http://hostanme/posit
 api.add_resource(PositionID, '/position/<int:position_id>')  # http://hostanme/position/<number id>
 api.add_resource(PositionsList, '/positions')  # http://hostanme/positions
 api.add_resource(Cash, '/cash')  # http://hostanme/cash
+
+
+# handler for all ValidationError for marshmallow load
+@app.errorhandler(ValidationError)
+def handle_marshmallow_validation(err):
+    logging.error(f'ValidationError with {err.messages}')
+    return jsonify(err.messages), 400
 
 
 def main():

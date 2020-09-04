@@ -1,29 +1,12 @@
-from typing import List, Dict, Union
+import logging
+from typing import Union
 
 import requests
 import requests.exceptions
 from sqlalchemy.exc import IntegrityError
-import logging
 
 from db import db
-
-
-StockJSON = Dict[str, Union[int, str, float]]
-StockDetailedJSON = Dict[str, Union[int, str, float, List[StockJSON]]]
-
-NOT_VALID_SYMBOL = 'Not a valid symbol'
-NOT_VALID_DESC = 'Not a valid description'
-ID = 'id'
-SYMBOL = 'symbol'
-DESC = 'desc'
-QUANTITY = 'quantity'
-UNIT_COST = 'unit_cost'
-STOP_QUOTE = 'stop_quote'
-PRICE = 'price'
-ERR = 'ERR'
-# maximum length for string fields
-SYMBOL_MAX_LEN = 5  # maximum len of symbol string
-DESC_MAX_LEN = 30  # maximum len of description string
+from globals.constants import *
 
 # for stock price requests
 TOKEN = "bs2hfe7rh5rc90r58vqg"
@@ -45,36 +28,42 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
     # PositionsModel. Lazy will ask to not create entries for positions
     positions = db.relationship('PositionsModel', lazy='dynamic', backref='stock', cascade='all')
 
-    def get_price(self) -> float:
-        """get current stock price from finnhub"""
+    def get_price(self) -> Union[float, str]:
+        """get current stock price from finnhub
+        this function defined as a property
+        :return if no error, current stock price, otherwise ERR"""
         quote_api_url = FINNHUB_URL + "/quote"
+        _price = 0
         try:
             response = requests.get(quote_api_url,
                                     params={'symbol': self.symbol, 'token': TOKEN},
-                                    timeout=0.5
-                                    )
+                                    timeout=0.5)
             response.raise_for_status()
         except requests.exceptions.ConnectTimeout:
             logging.warning(f'func: get_current_price ConnectTimeout')
-            self._price = ERR
+            _price = ERR
         except Exception as e:
             logging.error(f'func: get_current_price Exception {e}')
-            self._price = ERR
+            _price = ERR
         else:
             json_response = response.json()
             if 'error' in json_response:
                 # symbol not found
                 logging.error(f'func: get_current_price, symbol {self.symbol} not found')
-                self._price = ERR
+                _price = ERR
             else:
-                self._price = json_response['c']
+                try:
+                    _price = json_response['c']
+                except KeyError:
+                    logging.error(f'key c not found in json_response={json_response}')
+                    _price = ERR
         finally:
-            return self._price
+            return _price
 
     price = property(fget=get_price, fset=None, fdel=None, doc="Get current price")
 
     def __repr__(self) -> str:
-        return f'id={self.id}, symbol={self.symbol}, desc={self.desc}, quantity={self.quantity}, unit_cost={self.unit_cost}, stop_quote={self.stop_quote} '
+        return f'id={self.id}, symbol={self.symbol}, desc={self.desc}, quantity={self.quantity}, unit_cost={self.unit_cost}, stop_quote={self.stop_quote}'
 
     @classmethod
     def find_by_symbol(cls, symbol: str) -> "StockModel":
@@ -93,44 +82,6 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
         """
         # SELECT * FROM stock WHERE symbol=symbol
         return cls.query.filter_by(stock_id=stock_id).first()
-
-    def _json(self) -> StockJSON:
-        """
-        create JSON for the stock details. not including current price
-        """
-        json_dict = {
-            ID: self.id,
-            SYMBOL: self.symbol,
-            DESC: self.desc,
-            QUANTITY: self.quantity,
-            UNIT_COST: self.unit_cost
-        }
-        if self.stop_quote:
-            json_dict[STOP_QUOTE] = self.stop_quote
-        return json_dict
-
-    def _detailed_json(self) -> StockDetailedJSON:
-        """
-        create JSON for the stock details, current stock price and stock's positions
-        """
-        json_dict = self.json()
-        # add the current price to json
-        json_dict[PRICE] = self.price
-        # add the positions list to the json
-        positions_list = {'positions': [position.json() for position in self.positions.all()]}
-        json_dict.update(positions_list)
-        return json_dict
-
-    def _detailed_stock(self) -> StockDetailedJSON:
-        """
-        create JSON for the stock details, current stock price and stock's positions
-        """
-        stock_json = stock_schema.dump(self)
-        # add the current price to json
-        stock_json[PRICE] = self.price
-        # add the positions list to the json
-        positions_list = self.positions.all()
-        stock_json.update(positions_list)
 
     def save_details(self) -> bool:
         """

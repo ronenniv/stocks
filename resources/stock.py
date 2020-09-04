@@ -2,22 +2,18 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from http import HTTPStatus
 
-from flask_restful import Resource
 from flask import request
-from marshmallow import ValidationError
+from flask_restful import Resource
 
-from models.stock import StockModel, DESC
+from globals.constants import *
+from models.positions import PositionsModel
+from models.stock import StockModel
+from schemas.positions import PositionSchema
 from schemas.stock import StockSchema
-
-MESSAGE = 'message'
-STOCK_EXIST = 'Stock {} already exist'
-STOCK_NOT_FOUND = 'Stock {} not found'
-ERROR_UPDATE_STOCK = 'Error when updating stock {}'
-ERROR_SAVE_STOCK = 'Error when saving stock {}'
-ERROR_DEL_STOCK = 'Error to delete stock {}'
 
 stock_schema = StockSchema()
 stock_list_schema = StockSchema(many=True)
+position_list_schema = PositionSchema(many=True)
 
 
 class Stock(Resource):
@@ -30,7 +26,11 @@ class Stock(Resource):
         symbol = symbol.upper()
         if stock := StockModel.find_by_symbol(symbol):
             # stock exist in DB
-            return stock_schema.dump(stock)
+            result = stock_schema.dump(stock)
+            if positions_list := PositionsModel.find_by_symbol(symbol):
+                positions_list_json = position_list_schema.dump(positions_list)
+                result.update(positions_list_json)
+            return result
         else:
             return {MESSAGE: STOCK_NOT_FOUND.format(symbol)}, HTTPStatus.NOT_FOUND
 
@@ -41,7 +41,12 @@ class Stock(Resource):
         {desc: description}
         """
         symbol = symbol.upper()
-        stock = StockModel(symbol, StockModel.parse_request_json()[DESC])
+        stock_json = request.get_json()
+
+        new_stock = stock_schema.load(stock_json, partial=(SYMBOL, ))
+        new_stock['symbol'] = symbol
+        stock = StockModel(**new_stock)
+
         if stock.save_details():
             # stock created in DB
             return stock_schema.dump(stock), HTTPStatus.CREATED
@@ -56,13 +61,10 @@ class Stock(Resource):
         """
         symbol = symbol.upper()
         stock_json = request.get_json()
-        if errors := stock_schema.validate(stock_json):
-            # errors in payload
-            logging.error(errors)
-            return {MESSAGE: ERROR_SAVE_STOCK.format(symbol)}, HTTPStatus.BAD_REQUEST
+        stock_put = stock_schema.load(stock_json)
         if stock := StockModel.find_by_symbol(symbol):
             # stock is exist, then need to update symbol and desc
-            return stock_schema.dump(stock) if stock.update_symbol_and_desc(**stock_schema.load(stock_json)) \
+            return stock_schema.dump(stock) if stock.update_symbol_and_desc(stock_put['symbol'], stock_put['desc']) \
                 else ({MESSAGE: ERROR_UPDATE_STOCK.format(symbol)}, HTTPStatus.BAD_REQUEST)
         else:
             # stock not found, then create new one
@@ -79,7 +81,7 @@ class Stock(Resource):
         symbol = symbol.upper()
         if stock := StockModel.find_by_symbol(symbol):
             # stock exist in DB
-            return stock if stock.del_stock() \
+            return stock_schema.dump(stock) if stock.del_stock() \
                 else ({MESSAGE: ERROR_DEL_STOCK.format(symbol)}, HTTPStatus.CONFLICT)
         else:
             return {MESSAGE: STOCK_NOT_FOUND.format(symbol)}, HTTPStatus.NOT_FOUND
@@ -95,5 +97,6 @@ class StockList(Resource):
         executor = ThreadPoolExecutor()
         # create json for each stock
         # to support thread need to provide current_app for debugging
-        stocks_futures = [executor.submit(stock.detailed_json) for stock in stocks_list]
-        return {'stocks': [stock.result() for stock in stocks_futures]}
+        stocks_futures = [executor.submit(stock_schema.dump, stock) for stock in stocks_list]
+        result = {'stocks': [stock.result() for stock in stocks_futures]}
+        return result
