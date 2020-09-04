@@ -49,13 +49,13 @@ class StockModel(db.Model):  # extend db.Model for SQLAlchemy
             json_response = response.json()
             if 'error' in json_response:
                 # symbol not found
-                logging.error(f'func: get_current_price, symbol {self.symbol} not found')
+                logging.error(f'func: get_current_price, {self.symbol=} not found')
                 _price = ERR
             else:
                 try:
                     _price = json_response['c']
                 except KeyError:
-                    logging.error(f'key c not found in json_response={json_response}')
+                    logging.error(f'key c not found in {json_response=}')
                     _price = ERR
         finally:
             return _price

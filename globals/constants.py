@@ -12,7 +12,6 @@ DESC = 'desc'
 STOP_QUOTE = 'stop_quote'
 PRICE = 'price'
 ERR = 'ERR'
-# maximum length for string fields
 SYMBOL_MAX_LEN = 5  # maximum len of symbol string
 DESC_MAX_LEN = 30  # maximum len of description string
 STOCK_EXIST = 'Stock {} already exist'
