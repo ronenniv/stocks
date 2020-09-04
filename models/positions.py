@@ -1,24 +1,8 @@
-from typing import List, Dict, Union
+import logging
+from typing import List, Union
 
 from db import db
-
-from datetime import date
-
-from flask_restful import reqparse
-
 from models.stock import StockModel
-
-PositionJSON = Dict[str, Union[int, date, float]]
-
-NOT_VALID_COST = 'Not a valid unit cost number'
-PARAM_IS_MISSING = '{} is missing or invalid'
-SYMBOL = 'symbol'
-QUANTITY = 'quantity'
-POSITION_DATE = 'position_date'
-UNIT_COST = 'unit_cost'
-CALC_FLAG = 'calc_flag'
-POSITION_ID = 'position_id'
-STOCK_ID = 'stock_id'
 
 
 class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
@@ -26,82 +10,18 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
     __tablename__ = 'positions'
 
     id = db.Column(db.Integer, primary_key=True)
-    quantity = db.Column(db.Integer)
-    position_date = db.Column(db.Date)
-    unit_cost = db.Column(db.Float(precision=2))
-    # unit_cost = db.Column(db.Float(precision=const.PRICE_PRECISION))
-    calc_flag = db.Column(db.Boolean)  # indicator for calc
+    quantity = db.Column(db.Integer, nullable=False)
+    position_date = db.Column(db.Date, nullable=False)
+    unit_cost = db.Column(db.Float(precision=2), nullable=False)
     stock_id = db.Column(db.Integer, db.ForeignKey('stock.id'), nullable=False)  # foreign key to stock table
 
-    def __init__(self,
-                 symbol: str,
-                 quantity: int,
-                 position_date: date,
-                 unit_cost: float,
-                 calc_flag: bool = False,
-                 stock_id: int = None,
-                 **kwargs):
-        super().__init__(**kwargs)
-        self.symbol = symbol
-        self.quantity = quantity
-        self.position_date = position_date
-        self.unit_cost = unit_cost
-        self.calc_flag = calc_flag
-        self.stock_id = stock_id
-
     def __repr__(self):
-        return str(self.json())
-
-    @classmethod
-    def unit_cost_validation(cls, value: float) -> float:
-        value = float(value)
-        if value != round(value, 2):
-            raise ValueError(NOT_VALID_COST)
-        return value
-
-    @classmethod
-    def parse_request_json(cls):
-        """
-        parse position details from request
-        {"date": <date>,
-         "quantity": <quantity>,
-         "unit_cost": <unit_cost>}
-        """
-        parser = reqparse.RequestParser()
-        parser.add_argument(name=POSITION_DATE,
-                            type=lambda s: date.fromisoformat(s),
-                            required=True,
-                            trim=True,
-                            help=PARAM_IS_MISSING.format('Date'))
-        parser.add_argument(name=QUANTITY,
-                            type=int,
-                            required=True,
-                            trim=True,
-                            help=PARAM_IS_MISSING.format('Quantity'))
-        parser.add_argument(name=UNIT_COST,
-                            type=cls.unit_cost_validation,
-                            required=True,
-                            trim=True)
-        return parser.parse_args(strict=True)  # only the specific argument can be in the request
-
-    @classmethod
-    def parse_request_json_position_id(cls):
-        """
-        parse position id from request
-        {"position_id": <position_id>
-        """
-        parser = reqparse.RequestParser()
-        parser.add_argument(name=POSITION_ID,
-                            type=int,
-                            required=True,
-                            trim=True,
-                            help=PARAM_IS_MISSING.format('Position'))
-        return parser.parse_args(strict=True)  # only the one argument can be in the request
+        return f'id={self.id}, quantity={self.quantity}, position_date={self.position_date}, unit_cost={self.unit_cost}, stock_id={self.stock_id} '
 
     @classmethod
     def find_by_symbol(cls, symbol: str) -> Union[List["PositionsModel"], None]:
         """
-        find stock in DB according to symbol
+        find all positions for stock according to symbol
         :return if found, return list of positions for the stock, else None
         """
         if stock := StockModel.find_by_symbol(symbol):
@@ -119,48 +39,40 @@ class PositionsModel(db.Model):  # extend db.Model from SQLAlchemy
         """
         return cls.query.get(position_id)  # SQLAlchemy -> SELECT * FROM position WHERE id=position_id
 
-    def json(self) -> PositionJSON:
-        """
-        create JSON for the stock details
-        """
-        return {
-            POSITION_ID: self.id,
-            POSITION_DATE: self.position_date.strftime('%Y-%m-%d'),
-            QUANTITY: self.quantity,
-            UNIT_COST: self.unit_cost,
-            CALC_FLAG: self.calc_flag,
-            STOCK_ID: self.stock_id
-        }
-
-    def save_details(self) -> bool:
+    def save_details(self, symbol: str) -> bool:
         """
         insert position details for a stock
         """
-        if stock := StockModel.find_by_symbol(self.symbol):
+        if stock := StockModel.find_by_symbol(symbol):
             # stock is in DB, then add position and update stock quantity and cost
-            self.stock_id = stock.id
-            db.session.add(self)
-            # calc by adding unit_cost and quantity to existing
-            stock.calc_unit_cost_and_quantity(self.unit_cost, self.quantity)
-            self.calc_flag = True  # set the flag to show position got calculated
-            db.session.commit()
-            return True
+            try:
+                self.stock_id = stock.id
+                db.session.add(self)
+                # calc by adding unit_cost and quantity to existing
+                stock.calc_unit_cost_and_quantity(self.unit_cost, self.quantity, commit_flag=False)
+                db.session.commit()
+                return True
+            except:
+                db.session.rollback()
+                logging.error(f'failed to save details self={self}, symbol={symbol}')
+                return False
         else:
             # stock not found
             return False
 
-    def del_position(self, symbol: str) -> bool:
+    def del_position(self) -> bool:
         """
         delete stock from DB
         :return True for success, False for failure
         """
         # find the stock and calculate the updated unit_cost and quantity
-        stock = StockModel.find_by_symbol(symbol)
-        if self in stock.positions:  # check if the position belongs to the stock
+
+        try:
             db.session.delete(self)
-            stock.calc_unit_cost_and_quantity(self.unit_cost, -self.quantity)
+            self.stock.calc_unit_cost_and_quantity(self.unit_cost, -self.quantity, commit_flag=False)
             db.session.commit()
             return True
-        else:
-            # not match between position and the stock symbol
+        except:
+            db.session.rollback()
+            logging.error(f'error in del position {self}')
             return False
