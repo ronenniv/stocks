@@ -11,8 +11,7 @@ class CashModel(db.Model):  # extend db.Model for SQLAlchemy
     __tablename__ = 'cash'
 
     id = db.Column(db.Integer, primary_key=True)
-    #balance = db.Column(db.Float(precision=2), nullable=False)
-    balance = db.Column(db.DECIMAL(precision=2), nullable=False)
+    balance = db.Column(db.Float(precision=2), nullable=False)
 
     def __repr__(self):
         return f'{self.id=}, {self.balance=}'
@@ -72,4 +71,3 @@ class CashModel(db.Model):  # extend db.Model for SQLAlchemy
             db.session.commit()
             return True
         return False
-
