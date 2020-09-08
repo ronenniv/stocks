@@ -4,12 +4,17 @@ from globals.constants import *
 from ma import ma
 from models.cash import CashModel
 
+from decimal import Decimal
 
-class CashSchema(ma.SQLAlchemyAutoSchema):
+
+class CashSchema(ma.SQLAlchemySchema):
     class Meta:
         model = CashModel
         dump_only = ('id',)  # dont load id
         load_only = ('id',)  # dont dump id
+
+    id = ma.auto_field()
+    balance = ma.Float()  # type in DB is Decimal but due to json dump limitation, it's defined as float in schema
 
     @post_load
     def make_cash_model(self, data, **kwargs):
